@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>KGM Repuestos | Detalle de producto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a href="index.html" class="brand">
+          <img
+            src="assets/c__Users_jgarciav_AppData_Roaming_Cursor_User_workspaceStorage_4ac975e9f4eb7701fbcd5d9f0d264b31_images_image-affdcb3f-6f7f-4c29-8d5f-486123c8b591.png"
+            alt="KGM SsangYong"
+            class="brand-logo"
+          />
+          <div class="brand-text">
+            <span class="brand-name">KGM REPUESTOS</span>
+            <span class="brand-subtitle">Tienda oficial Colombia</span>
+          </div>
+        </a>
+
+        <nav class="nav">
+          <a href="index.html">Inicio</a>
+          <a href="listado.html">Repuestos</a>
+          <a href="producto.html" class="is-active">Detalle de producto</a>
+          <a href="index.html#compatibilidad">Compatibilidad</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="pill-btn">
+            <span class="pill-dot"></span>
+            Sin vehículo aplicado
+          </button>
+          <button class="pill-btn pill-btn--primary">Filtrado OFF</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrapper">
+      <nav class="breadcrumbs">
+        Inicio / Repuestos / Frenos /
+        <strong>Kit pastillas de freno delantera Tivoli</strong>
+      </nav>
+
+      <section class="product-layout">
+        <!-- Galería -->
+        <div class="product-media-card">
+          <div class="product-media-main"></div>
+          <div class="product-media-thumbs">
+            <div class="product-media-thumb"></div>
+            <div class="product-media-thumb"></div>
+            <div class="product-media-thumb"></div>
+          </div>
+          <p class="section-subtitle">
+            Imágenes referenciales. En la implementación real se conectan al
+            catálogo de medios del CRM.
+          </p>
+        </div>
+
+        <!-- Información + compatibilidad -->
+        <article class="product-info-card">
+          <div>
+            <div class="tagline">Repuesto original KGM</div>
+            <h1 class="product-title-main">
+              Kit pastillas de freno delantera Tivoli
+            </h1>
+            <div class="product-subcode">
+              Código interno CRM: KGM-BRK-00123
+            </div>
+          </div>
+
+          <div>
+            <div class="product-price-main">$ 420.000</div>
+            <div class="product-meta-row">
+              <span class="pill-mini">Garantía KGM 12 meses</span>
+              <span class="pill-mini">Instalación en red de talleres</span>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="section-title">Descripción</h2>
+            <p class="section-subtitle">
+              Juego de pastillas de freno delanteras para camionetas KGM,
+              diseñado para ofrecer frenado progresivo, menor ruido y mayor
+              durabilidad en condiciones urbanas y de carretera.
+            </p>
+          </div>
+
+          <!-- Bloque conceptual de compatibilidad -->
+          <section class="compatibility-card">
+            <header class="compatibility-header-row">
+              <div>
+                <div class="compatibility-title">Compatibilidad por vehículo</div>
+                <p class="compatibility-desc">
+                  Aplica tu placa o VIN para validar si este repuesto es 100%
+                  compatible antes de agregar al carrito.
+                </p>
+              </div>
+              <span class="compat-tag">Flujo opcional</span>
+            </header>
+
+            <div class="compatibility-select-row">
+              <select class="field-select">
+                <option>Placa / VIN</option>
+                <option>ABC123</option>
+                <option>KGM123VIN4567890</option>
+              </select>
+              <select class="field-select">
+                <option>Modelo</option>
+                <option>Tivoli</option>
+                <option>Korando</option>
+              </select>
+              <select class="field-select">
+                <option>Año</option>
+                <option>2024</option>
+                <option>2023</option>
+              </select>
+            </div>
+
+            <div class="compatibility-list">
+              <strong>Ejemplo de respuesta del CRM:</strong>
+              <ul>
+                <li>✔ Compatible con Tivoli 1.6 Gasolina 2022–2024.</li>
+                <li>✔ Compatible con Korando 1.5 Turbo 2021–2023.</li>
+                <li>✖ No compatible con Rexton ni Musso.</li>
+              </ul>
+            </div>
+          </section>
+
+          <div class="cta-row">
+            <button class="btn-primary">Agregar al carrito</button>
+            <button class="btn-secondary">
+              Guardar para cotización en concesionario
+            </button>
+            <p class="trust-text">
+              La compatibilidad se valida en tiempo real contra el CRM antes de
+              confirmar tu compra.
+            </p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>© 2026 KGM Colombia.</span>
+        <span>Prototipo de ficha de producto con compatibilidad.</span>
+      </div>
+    </footer>
+  </body>
+</html>
+

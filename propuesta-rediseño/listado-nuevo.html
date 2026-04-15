@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repuestos - KGM Tienda Oficial</title>
+    <link rel="stylesheet" href="styles-nuevo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index-nuevo.html" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-truck-pickup"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-brand">KGM</span>
+                    <span class="logo-sub">Repuestos</span>
+                </div>
+            </a>
+
+            <div class="search-global">
+                <input type="text" placeholder="Buscar repuestos por nombre, referencia o categoría...">
+                <button class="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="header-actions">
+                <div class="vehicle-selector-header has-vehicle" id="vehicleSelector">
+                    <div class="vehicle-saved" id="vehicleSaved">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="saved-model">KGM Tivoli 2023</span>
+                        <button class="change-vehicle" onclick="toggleVehicleModal()">Cambiar</button>
+                    </div>
+                </div>
+                <button class="icon-btn"><i class="fas fa-user"></i></button>
+                <button class="icon-btn cart-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">2</span>
+                </button>
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="listado-nuevo.html" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    Todas las categorías
+                </a>
+                <a href="listado-nuevo.html?cat=frenos" class="nav-item">Frenos</a>
+                <a href="listado-nuevo.html?cat=suspension" class="nav-item">Suspensión</a>
+                <a href="listado-nuevo.html?cat=motor" class="nav-item">Motor</a>
+                <a href="listado-nuevo.html?cat=filtros" class="nav-item">Filtros</a>
+                <a href="listado-nuevo.html?cat=transmision" class="nav-item">Transmisión</a>
+                <a href="listado-nuevo.html?cat=electricos" class="nav-item">Sistema eléctrico</a>
+                <a href="listado-nuevo.html?cat=carroceria" class="nav-item">Carrocería</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Modal de Vehículo -->
+    <div class="vehicle-modal" id="vehicleModal">
+        <div class="modal-overlay" onclick="toggleVehicleModal()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="toggleVehicleModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <i class="fas fa-car-side"></i>
+                <h2>Cambiar vehículo</h2>
+                <p>Selecciona un nuevo vehículo para ver compatibilidad de repuestos.</p>
+            </div>
+            <div class="vehicle-search-tabs">
+                <button class="tab-btn active" data-tab="placa">Por placa</button>
+                <button class="tab-btn" data-tab="vin">Por VIN</button>
+                <button class="tab-btn" data-tab="linea">Por línea</button>
+            </div>
+            <div class="tab-content active" id="tab-placa">
+                <div class="search-input-group">
+                    <input type="text" placeholder="Ej: ABC123" class="plate-input">
+                    <button class="btn-primary" onclick="toggleVehicleModal()">Buscar</button>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-vin">
+                <div class="search-input-group">
+                    <input type="text" placeholder="Ej: KNAMT81BBM1234567" class="vin-input">
+                    <button class="btn-primary" onclick="toggleVehicleModal()">Buscar</button>
+                </div>
+            </div>
+            <div class="tab-content" id="tab-linea">
+                <div class="select-group">
+                    <select class="select-field">
+                        <option>Selecciona modelo</option>
+                        <option>KGM Tivoli</option>
+                        <option>KGM Korando</option>
+                    </select>
+                    <select class="select-field">
+                        <option>Año</option>
+                        <option>2024</option>
+                        <option>2023</option>
+                    </select>
+                    <button class="btn-primary" onclick="toggleVehicleModal()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb y Título -->
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="index-nuevo.html">Inicio</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Todos los repuestos</span>
+        </div>
+        <h1>Repuestos KGM</h1>
+        <p class="results-count">Mostrando <strong>1,247</strong> productos</p>
+    </div>
+
+    <!-- Filtros Activos y Compatibilidad -->
+    <div class="active-filters-bar">
+        <div class="compatibility-filter">
+            <div class="compatibility-toggle">
+                <input type="checkbox" id="compatFilter" checked>
+                <label for="compatFilter">
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-text">
+                        <i class="fas fa-check-circle"></i>
+                        Solo compatibles con <strong>KGM Tivoli 2023</strong>
+                    </span>
+                </label>
+            </div>
+            <span class="compatibility-count">847 productos compatibles</span>
+        </div>
+
+        <div class="filters-tags">
+            <span class="filter-tag">
+                Precio: $0 - $500.000
+                <button><i class="fas fa-times"></i></button>
+            </span>
+            <span class="filter-tag">
+                Categoría: Filtros
+                <button><i class="fas fa-times"></i></button>
+            </span>
+            <button class="clear-filters">Limpiar filtros</button>
+        </div>
+    </div>
+
+    <!-- Layout Principal -->
+    <div class="catalog-layout">
+        <!-- Sidebar de Filtros -->
+        <aside class="filters-sidebar">
+            <div class="filter-section">
+                <div class="filter-header">
+                    <h3>Categorías</h3>
+                    <button class="toggle-section"><i class="fas fa-chevron-up"></i></button>
+                </div>
+                <div class="filter-content">
+                    <label class="filter-checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                        <span class="label-text">Frenos</span>
+                        <span class="count">(245)</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" checked>
+                        <span class="checkmark"></span>
+                        <span class="label-text">Filtros</span>
+                        <span class="count">(189)</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                        <span class="label-text">Suspensión</span>
+                        <span class="count">(312)</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                        <span class="label-text">Motor</span>
+                        <span class="count">(428)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-header">
+                    <h3>Precio</h3>
+                    <button class="toggle-section"><i class="fas fa-chevron-up"></i></button>
+                </div>
+                <div class="filter-content">
+                    <div class="price-range">
+                        <input type="range" min="0" max="2000000" value="500000" class="price-slider">
+                        <div class="price-inputs">
+                            <div class="price-field">
+                                <span>$</span>
+                                <input type="number" value="0" placeholder="Min">
+                            </div>
+                            <span class="separator">-</span>
+                            <div class="price-field">
+                                <span>$</span>
+                                <input type="number" value="500000" placeholder="Max">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-header">
+                    <h3>Compatibilidad con vehículos</h3>
+                    <button class="toggle-section"><i class="fas fa-chevron-up"></i></button>
+                </div>
+                <div class="filter-content">
+                    <p class="filter-description">Filtrar por modelos compatibles:</p>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" checked>
+                        <span class="checkmark"></span>
+                        <span class="label-text">KGM Tivoli</span>
+                        <span class="count">(423)</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" checked>
+                        <span class="checkmark"></span>
+                        <span class="label-text">KGM Tivoli XLV</span>
+                        <span class="count">(398)</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox">
+                        <span class="checkmark"></span>
+                        <span class="label-text">KGM Korando</span>
+                        <span class="count">(312)</span>
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Grid de Productos -->
+        <div class="products-container">
+            <div class="sort-bar">
+                <div class="view-toggle">
+                    <button class="view-btn active" title="Vista grid">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="view-btn" title="Vista lista">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+                <div class="sort-select">
+                    <label>Ordenar por:</label>
+                    <select>
+                        <option>Relevancia</option>
+                        <option>Precio: Menor a mayor</option>
+                        <option>Precio: Mayor a menor</option>
+                        <option>Más vendidos</option>
+                        <option>Compatibilidad</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="products-grid large">
+                <article class="product-card">
+                    <div class="product-badge compatible">
+                        <i class="fas fa-check-circle"></i>
+                        Compatible
+                    </div>
+                    <a href="producto-nuevo.html" class="product-image">
+                        <div class="product-placeholder">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                    </a>
+                    <div class="product-info">
+                        <span class="product-sku">REF: FA-23140-34010</span>
+                        <a href="producto-nuevo.html" class="product-name">Filtro de aire motor</a>
+                        <p class="product-desc">Filtro de aire original para motores gasolina</p>
+                        <div class="product-meta">
+                            <span class="stock in-stock"><i class="fas fa-check"></i> En stock</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">$85.000</span>
+                            <button class="btn-add-cart">
+                                <i class="fas fa-cart-plus"></i>
+                                Agregar
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-badge compatible">
+                        <i class="fas fa-check-circle"></i>
+                        Compatible
+                    </div>
+                    <a href="producto-nuevo.html" class="product-image">
+                        <div class="product-placeholder">
+                            <i class="fas fa-circle-notch"></i>
+                        </div>
+                    </a>
+                    <div class="product-info">
+                        <span class="product-sku">REF: BP-58101-C5100</span>
+                        <a href="producto-nuevo.html" class="product-name">Pastillas de freno delanteras</a>
+                        <p class="product-desc">Juego de pastillas de freno originales</p>
+                        <div class="product-meta">
+                            <span class="stock in-stock"><i class="fas fa-check"></i> En stock</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">$145.000</span>
+                            <button class="btn-add-cart">
+                                <i class="fas fa-cart-plus"></i>
+                                Agregar
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-card">
+                    <div class="product-badge compatible">
+                        <i class="fas fa-check-circle"></i>
+                        Compatible
+                    </div>
+                    <a href="producto-nuevo.html" class="product-image">
+                        <div class="product-placeholder">
+                            <i class="fas fa-oil-can"></i>
+                        </div>
+                    </a>
+                    <div class="product-info">
+                        <span class="product-sku">REF: FO-26300-35504</span>
+                        <a href="producto-nuevo.html" class="product-name">Filtro de aceite</a>
+                        <p class="product-desc">Filtro de aceite para motor diésel</p>
+                        <div class="product-meta">
+                            <span class="stock low-stock"><i class="fas fa-exclamation"></i> Pocos disponibles</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">$45.000</span>
+                            <button class="btn-add-cart">
+                                <i class="fas fa-cart-plus"></i>
+                                Agregar
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="product-card not-compatible">
+                    <div class="product-badge not-compatible">
+                        <i class="fas fa-times-circle"></i>
+                        No compatible
+                    </div>
+                    <a href="producto-nuevo.html" class="product-image">
+                        <div class="product-placeholder">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                    </a>
+                    <div class="product-info">
+                        <span class="product-sku">REF: CM-67103-31010</span>
+                        <a href="producto-nuevo.html" class="product-name">Correa de distribución</a>
+                        <p class="product-desc">Correa de distribución motor gasolina</p>
+                        <div class="product-meta">
+                            <span class="stock in-stock"><i class="fas fa-check"></i> En stock</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">$280.000</span>
+                            <button class="btn-add-cart">
+                                <i class="fas fa-cart-plus"></i>
+                                Agregar
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="pagination">
+                <button class="page-btn" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span class="page-dots">...</span>
+                <button class="page-btn">42</button>
+                <button class="page-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-truck-pickup"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-brand">KGM</span>
+                        <span class="logo-sub">Repuestos</span>
+                    </div>
+                </div>
+                <p>Tienda oficial de repuestos genuinos KGM en Colombia.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleVehicleModal() {
+            const modal = document.getElementById('vehicleModal');
+            modal.classList.toggle('active');
+        }
+
+        document.getElementById('compatFilter').addEventListener('change', function() {
+            const notCompatible = document.querySelectorAll('.product-card.not-compatible');
+            notCompatible.forEach(card => {
+                card.style.display = this.checked ? 'none' : 'flex';
+            });
+        });
+    </script>
+</body>
+</html>

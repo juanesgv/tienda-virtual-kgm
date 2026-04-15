@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>KGM Repuestos | Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a href="index.html" class="brand">
+          <img
+            src="assets/c__Users_jgarciav_AppData_Roaming_Cursor_User_workspaceStorage_4ac975e9f4eb7701fbcd5d9f0d264b31_images_image-affdcb3f-6f7f-4c29-8d5f-486123c8b591.png"
+            alt="KGM SsangYong"
+            class="brand-logo"
+          />
+          <div class="brand-text">
+            <span class="brand-name">KGM REPUESTOS</span>
+            <span class="brand-subtitle">Tienda oficial Colombia</span>
+          </div>
+        </a>
+
+        <nav class="nav">
+          <a href="index.html" class="is-active">Inicio</a>
+          <a href="listado.html">Repuestos</a>
+          <a href="producto.html">Detalle de producto</a>
+          <a href="#compatibilidad">Compatibilidad</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="pill-btn">
+            <span class="pill-dot"></span>
+            Iniciar sesión
+          </button>
+          <button class="pill-btn pill-btn--primary">0 productos</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrapper">
+      <!-- Hero -->
+      <section class="hero-grid">
+        <div class="hero-main-card">
+          <div class="hero-kicker">Tienda oficial de repuestos KGM</div>
+          <h1 class="hero-title">
+            Explora repuestos
+            <span>sin identificar tu vehículo</span>
+          </h1>
+          <p class="hero-copy">
+            Navega por categorías, filtra por tipo de pieza o sistema del
+            vehículo y cuando quieras, vincula tu placa o VIN para ver qué
+            repuestos son 100% compatibles.
+          </p>
+
+          <div class="hero-search-card">
+            <div class="search-pill-toggle">
+              Búsqueda principal de repuestos
+              <span class="search-pill-toggle-badge">Nuevo flujo</span>
+            </div>
+            <div class="search-bar">
+              <div class="search-input-wrap">
+                <span>🔍</span>
+                <input
+                  type="search"
+                  class="search-input"
+                  placeholder="Buscar por nombre del repuesto, código o categoría"
+                />
+              </div>
+              <button class="search-button">Buscar repuestos</button>
+            </div>
+            <div class="hero-quick-links">
+              <strong>Búsquedas rápidas:</strong>
+              <span class="hero-quick-chip">Pastillas de freno</span>
+              <span class="hero-quick-chip">Filtros</span>
+              <span class="hero-quick-chip">Suspensión</span>
+              <span class="hero-quick-chip">Accesorios</span>
+            </div>
+          </div>
+
+          <div class="hero-badge">
+            <span class="hero-badge-label">Compatibilidad inteligente</span>
+            <span class="hero-badge-value">
+              Aplica tu vehículo en cualquier momento y filtramos por ti.
+            </span>
+          </div>
+        </div>
+
+        <!-- Bloque de búsqueda por vehículo siempre visible -->
+        <aside class="hero-side-card" id="compatibilidad">
+          <div class="hero-side-header">
+            <div>
+              <div class="hero-side-title">Tu vehículo KGM</div>
+              <div class="hero-side-subtitle">
+                Opcional: úsalo para validar compatibilidad sin bloquear tu
+                navegación.
+              </div>
+            </div>
+            <div class="hero-side-tag">Modo compatible activable</div>
+          </div>
+
+          <div>
+            <div class="vehicle-search-tabs">
+              <button class="vehicle-tab is-active">Placa</button>
+              <button class="vehicle-tab">VIN</button>
+              <button class="vehicle-tab">Línea</button>
+              <button class="vehicle-tab">Referencia repuesto</button>
+            </div>
+
+            <form class="vehicle-form">
+              <div>
+                <label class="field-label" for="placa">Placa del vehículo</label>
+                <input
+                  id="placa"
+                  type="text"
+                  class="field-input"
+                  placeholder="ABC123"
+                />
+              </div>
+              <div>
+                <label class="field-label" for="modelo">Modelo</label>
+                <select id="modelo" class="field-select">
+                  <option>Selecciona modelo</option>
+                  <option>Tivoli</option>
+                  <option>Korando</option>
+                  <option>Rexton</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="anio">Año</label>
+                <select id="anio" class="field-select">
+                  <option>Selecciona año</option>
+                  <option>2024</option>
+                  <option>2023</option>
+                  <option>2022</option>
+                </select>
+              </div>
+              <button type="button" class="btn-primary">
+                Aplicar compatibilidad
+              </button>
+            </form>
+
+            <div class="vehicle-meta">
+              <span>Sin vehículo aplicado</span>
+              <span class="compat-tag">Filtrado por compatibilidad OFF</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Categorías principales -->
+      <section class="section">
+        <header class="section-header">
+          <div>
+            <h2 class="section-title">Explora por sistema del vehículo</h2>
+            <p class="section-subtitle">
+              Navega libremente por repuestos como en un ecommerce tradicional.
+            </p>
+          </div>
+          <a href="listado.html" class="link-ghost">Ver todo el catálogo →</a>
+        </header>
+
+        <div class="card-grid">
+          <a href="listado.html" class="category-card">
+            <div class="category-tag">Sistema de frenos</div>
+            <div class="category-name">Pastillas, discos y kits</div>
+            <div class="category-meta">154 referencias</div>
+            <span class="pill-mini">Repuestos originales KGM</span>
+          </a>
+          <a href="listado.html" class="category-card">
+            <div class="category-tag">Filtros</div>
+            <div class="category-name">Aire, aceite y combustible</div>
+            <div class="category-meta">97 referencias</div>
+            <span class="pill-mini">Mantenimiento preventivo</span>
+          </a>
+          <a href="listado.html" class="category-card">
+            <div class="category-tag">Suspensión</div>
+            <div class="category-name">Amortiguadores y bujes</div>
+            <div class="category-meta">68 referencias</div>
+            <span class="pill-mini">Conducción estable</span>
+          </a>
+          <a href="listado.html" class="category-card">
+            <div class="category-tag">Accesorios</div>
+            <div class="category-name">Estilo y protección</div>
+            <div class="category-meta">42 referencias</div>
+            <span class="pill-mini">Diseñados para tu KGM</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Productos destacados -->
+      <section class="section">
+        <header class="section-header">
+          <div>
+            <h2 class="section-title">Repuestos destacados</h2>
+            <p class="section-subtitle">
+              Un vistazo rápido a productos clave antes de aplicar tu vehículo.
+            </p>
+          </div>
+        </header>
+
+        <div class="card-grid">
+          <a href="producto.html" class="product-card">
+            <div class="product-image-ghost"></div>
+            <div class="product-name">
+              Kit pastillas de freno delantera Tivoli
+            </div>
+            <div class="product-fit">Compatible con varios modelos KGM</div>
+            <div class="product-footer">
+              <span class="product-price">$ 420.000</span>
+              <span class="product-cta">Ver detalles →</span>
+            </div>
+          </a>
+
+          <a href="producto.html" class="product-card">
+            <div class="product-image-ghost"></div>
+            <div class="product-name">Filtro de aire motor 1.6</div>
+            <div class="product-fit">Sugerido para mantenimiento anual</div>
+            <div class="product-footer">
+              <span class="product-price">$ 95.000</span>
+              <span class="product-cta">Ver detalles →</span>
+            </div>
+          </a>
+
+          <a href="producto.html" class="product-card">
+            <div class="product-image-ghost"></div>
+            <div class="product-name">Amortiguador delantero gas</div>
+            <div class="product-fit">Mejora confort y estabilidad</div>
+            <div class="product-footer">
+              <span class="product-price">$ 380.000</span>
+              <span class="product-cta">Ver detalles →</span>
+            </div>
+          </a>
+
+          <a href="producto.html" class="product-card">
+            <div class="product-image-ghost"></div>
+            <div class="product-name">Kit tapetes interiores premium</div>
+            <div class="product-fit">Diseñados a la medida</div>
+            <div class="product-footer">
+              <span class="product-price">$ 210.000</span>
+              <span class="product-cta">Ver detalles →</span>
+            </div>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>© 2026 KGM Colombia. Repuestos y accesorios originales.</span>
+        <span>Este es un prototipo visual sin conexión a CRM.</span>
+      </div>
+    </footer>
+  </body>
+</html>
+

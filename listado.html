@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>KGM Repuestos | Listado de productos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page">
+    <header class="header">
+      <div class="header-inner">
+        <a href="index.html" class="brand">
+          <img
+            src="assets/c__Users_jgarciav_AppData_Roaming_Cursor_User_workspaceStorage_4ac975e9f4eb7701fbcd5d9f0d264b31_images_image-affdcb3f-6f7f-4c29-8d5f-486123c8b591.png"
+            alt="KGM SsangYong"
+            class="brand-logo"
+          />
+          <div class="brand-text">
+            <span class="brand-name">KGM REPUESTOS</span>
+            <span class="brand-subtitle">Tienda oficial Colombia</span>
+          </div>
+        </a>
+
+        <nav class="nav">
+          <a href="index.html">Inicio</a>
+          <a href="listado.html" class="is-active">Repuestos</a>
+          <a href="producto.html">Detalle de producto</a>
+          <a href="index.html#compatibilidad">Compatibilidad</a>
+        </nav>
+
+        <div class="header-actions">
+          <button class="pill-btn">
+            <span class="pill-dot"></span>
+            Vehículo sin aplicar
+          </button>
+          <button class="pill-btn pill-btn--primary">Filtrado OFF</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrapper">
+      <section class="layout-shell">
+        <!-- Filtros laterales -->
+        <aside class="filter-panel">
+          <header>
+            <div class="filter-header-title">Filtrar resultados</div>
+            <div class="filter-header-meta">
+              Explora primero. Activa la compatibilidad cuando estés listo.
+            </div>
+          </header>
+
+          <div class="filter-group">
+            <div class="filter-section-title">Sistema del vehículo</div>
+            <div class="filter-options">
+              <label><input type="checkbox" /> Frenos</label>
+              <label><input type="checkbox" /> Motor</label>
+              <label><input type="checkbox" /> Suspensión</label>
+              <label><input type="checkbox" /> Eléctrico</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-section-title">Tipo de repuesto</div>
+            <div class="filter-chip-row">
+              <button class="filter-chip is-active">Repuesto original</button>
+              <button class="filter-chip">Accesorio</button>
+              <button class="filter-chip">Mantenimiento</button>
+              <button class="filter-chip">Kit</button>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-section-title">Compatibilidad</div>
+            <div class="filter-options">
+              <label><input type="radio" name="compat" /> Ver todo</label>
+              <label
+                ><input type="radio" name="compat" checked /> Priorizar
+                compatibles (cuando aplique vehículo)</label
+              >
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-section-title">Rango de precio</div>
+            <div class="filter-options">
+              <span>$ 50.000 – $ 900.000</span>
+              <span class="section-subtitle">
+                (Controles ilustrativos, sin lógica real)
+              </span>
+            </div>
+          </div>
+
+          <div class="filter-footer">
+            <button class="btn-outline">Limpiar filtros</button>
+            <span>Resultados en tiempo real</span>
+          </div>
+        </aside>
+
+        <!-- Listado de productos -->
+        <section>
+          <header class="product-shell-header">
+            <div>
+              <div class="breadcrumbs">
+                Inicio / Repuestos / <strong>Frenos</strong>
+              </div>
+              <div class="result-summary">
+                Viendo 12 de 154 resultados para sistema de frenos.
+              </div>
+            </div>
+            <div>
+              <select class="sort-select">
+                <option>Ordenar por relevancia</option>
+                <option>Menor precio</option>
+                <option>Mayor precio</option>
+                <option>Más vendidos</option>
+              </select>
+            </div>
+          </header>
+
+          <div class="product-grid">
+            <!-- Tarjetas de ejemplo -->
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">
+                Kit pastillas de freno delantera Tivoli
+              </div>
+              <div class="product-fit">
+                Compatible con Tivoli, Korando (aplica por VIN/placa)
+              </div>
+              <div class="product-footer">
+                <span class="product-price">$ 420.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">Disco de freno ventilado 16"</div>
+              <div class="product-fit">
+                Ver compatibilidad exacta al aplicar tu vehículo
+              </div>
+              <div class="product-footer">
+                <span class="product-price">$ 360.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">Líquido de frenos DOT4</div>
+              <div class="product-fit">Recomendado por KGM para toda la gama</div>
+              <div class="product-footer">
+                <span class="product-price">$ 45.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">Sensor ABS rueda delantera</div>
+              <div class="product-fit">
+                Uso específico por modelo (se filtra por CRM)
+              </div>
+              <div class="product-footer">
+                <span class="product-price">$ 190.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">Caliper freno delantero</div>
+              <div class="product-fit">
+                Piezas originales reconstruidas y nuevas
+              </div>
+              <div class="product-footer">
+                <span class="product-price">$ 690.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+
+            <a href="producto.html" class="product-card">
+              <div class="product-image-ghost"></div>
+              <div class="product-name">Kit freno trasero tambor</div>
+              <div class="product-fit">Incluye zapatas, resortes y herrajes</div>
+              <div class="product-footer">
+                <span class="product-price">$ 340.000</span>
+                <span class="product-cta">Ver detalles →</span>
+              </div>
+            </a>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>© 2026 KGM Colombia.</span>
+        <span>Prototipo de experiencia de listado con filtros.</span>
+      </div>
+    </footer>
+  </body>
+</html>
+

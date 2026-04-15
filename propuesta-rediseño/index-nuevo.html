@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KGM Repuestos | Tienda Oficial Colombia</title>
+    <link rel="stylesheet" href="styles-nuevo.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <!-- Logo -->
+            <a href="index-nuevo.html" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-truck-pickup"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-brand">KGM</span>
+                    <span class="logo-sub">Repuestos</span>
+                </div>
+            </a>
+
+            <!-- Buscador Principal -->
+            <div class="search-global">
+                <input type="text" placeholder="Buscar repuestos por nombre, referencia o categoría...">
+                <button class="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+
+            <!-- Acciones -->
+            <div class="header-actions">
+                <!-- Selector de Vehículo (NUEVO - Destacado pero no bloqueante) -->
+                <div class="vehicle-selector-header" id="vehicleSelector">
+                    <button class="vehicle-btn" onclick="toggleVehicleModal()">
+                        <i class="fas fa-car"></i>
+                        <span class="vehicle-text">Mi vehículo</span>
+                        <span class="vehicle-status">Agregar</span>
+                    </button>
+                    <!-- Dropdown de vehículo guardado (aparece cuando hay vehículo) -->
+                    <div class="vehicle-saved hidden" id="vehicleSaved">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="saved-model">KGM Tivoli 2023</span>
+                        <button class="change-vehicle" onclick="toggleVehicleModal()">Cambiar</button>
+                    </div>
+                </div>
+
+                <button class="icon-btn"><i class="fas fa-user"></i></button>
+                <button class="icon-btn cart-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navegación Principal -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="listado-nuevo.html" class="nav-item">
+                    <i class="fas fa-th-large"></i>
+                    Todas las categorías
+                </a>
+                <a href="listado-nuevo.html?cat=frenos" class="nav-item">Frenos</a>
+                <a href="listado-nuevo.html?cat=suspension" class="nav-item">Suspensión</a>
+                <a href="listado-nuevo.html?cat=motor" class="nav-item">Motor</a>
+                <a href="listado-nuevo.html?cat=filtros" class="nav-item">Filtros</a>
+                <a href="listado-nuevo.html?cat=transmision" class="nav-item">Transmisión</a>
+                <a href="listado-nuevo.html?cat=electricos" class="nav-item">Sistema eléctrico</a>
+                <a href="listado-nuevo.html?cat=carroceria" class="nav-item">Carrocería</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Modal de Selección de Vehículo -->
+    <div class="vehicle-modal" id="vehicleModal">
+        <div class="modal-overlay" onclick="toggleVehicleModal()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="toggleVehicleModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="modal-header">
+                <i class="fas fa-car-side"></i>
+                <h2>Encuentra repuestos para tu vehículo</h2>
+                <p>Selecciona tu vehículo para ver compatibilidad de repuestos. <strong>Este paso es opcional</strong> - puedes explorar todos los productos sin identificar tu vehículo.</p>
+            </div>
+
+            <div class="vehicle-search-tabs">
+                <button class="tab-btn active" data-tab="placa">
+                    <i class="fas fa-id-card"></i>
+                    Por placa
+                </button>
+                <button class="tab-btn" data-tab="vin">
+                    <i class="fas fa-barcode"></i>
+                    Por VIN
+                </button>
+                <button class="tab-btn" data-tab="linea">
+                    <i class="fas fa-list"></i>
+                    Por línea
+                </button>
+            </div>
+
+            <div class="tab-content active" id="tab-placa">
+                <div class="search-input-group">
+                    <input type="text" placeholder="Ej: ABC123" maxlength="6" class="plate-input">
+                    <button class="btn-primary" onclick="saveVehicle()">
+                        <i class="fas fa-search"></i>
+                        Buscar por placa
+                    </button>
+                </div>
+                <p class="search-hint">Ingresa la placa de tu vehículo KGM para encontrar repuestos compatibles.</p>
+            </div>
+
+            <div class="tab-content" id="tab-vin">
+                <div class="search-input-group">
+                    <input type="text" placeholder="Ej: KNAMT81BBM1234567" maxlength="17" class="vin-input">
+                    <button class="btn-primary" onclick="saveVehicle()">
+                        <i class="fas fa-search"></i>
+                        Buscar por VIN
+                    </button>
+                </div>
+                <p class="search-hint">El VIN (Vehicle Identification Number) se encuentra en la tarjeta de propiedad o en el parabrisas del vehículo.</p>
+            </div>
+
+            <div class="tab-content" id="tab-linea">
+                <div class="select-group">
+                    <select class="select-field">
+                        <option value="">Selecciona modelo</option>
+                        <option value="tivoli">KGM Tivoli</option>
+                        <option value="tivoli-xlv">KGM Tivoli XLV</option>
+                        <option value="korando">KGM Korando</option>
+                        <option value="rexton">KGM Rexton</option>
+                        <option value="musso">KGM Musso</option>
+                    </select>
+                    <select class="select-field">
+                        <option value="">Año</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                    </select>
+                    <button class="btn-primary" onclick="saveVehicle()">
+                        <i class="fas fa-check"></i>
+                        Guardar vehículo
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-skip" onclick="toggleVehicleModal()">
+                    Explorar sin identificar vehículo →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-store"></i>
+                Tienda Oficial KGM Colombia
+            </div>
+            <h1>Repuestos originales para tu camioneta</h1>
+            <p class="hero-description">
+                Explora nuestro catálogo completo de repuestos genuinos KGM.
+                <strong>Compatible con SsangYong y KGM.</strong>
+            </p>
+
+            <div class="hero-cta">
+                <a href="listado-nuevo.html" class="btn-main">
+                    <i class="fas fa-th-large"></i>
+                    Ver todos los repuestos
+                </a>
+                <button class="btn-secondary" onclick="toggleVehicleModal()">
+                    <i class="fas fa-car"></i>
+                    Buscar por mi vehículo
+                </button>
+            </div>
+
+            <!-- Vehículo guardado notification -->
+            <div class="vehicle-notification hidden" id="vehicleNotification">
+                <i class="fas fa-check-circle"></i>
+                <span>Mostrando repuestos compatibles con: <strong>KGM Tivoli 2023</strong></span>
+                <a href="listado-nuevo.html?compatible=true" class="link-filter">Ver solo compatibles →</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-visual">
+                <i class="fas fa-truck-pickup"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorías Populares -->
+    <section class="categories-section">
+        <div class="section-header">
+            <h2>Categorías populares</h2>
+            <p>Explora por tipo de repuesto</p>
+        </div>
+
+        <div class="categories-grid">
+            <a href="listado-nuevo.html?cat=frenos" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-circle-notch"></i>
+                </div>
+                <h3>Frenos</h3>
+                <p>Discos, pastillas, calipers</p>
+                <span class="category-count">245 productos</span>
+            </a>
+
+            <a href="listado-nuevo.html?cat=filtros" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-filter"></i>
+                </div>
+                <h3>Filtros</h3>
+                <p>Aire, aceite, combustible</p>
+                <span class="category-count">189 productos</span>
+            </a>
+
+            <a href="listado-nuevo.html?cat=suspension" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-compress-arrows-alt"></i>
+                </div>
+                <h3>Suspensión</h3>
+                <p>Amortiguadores, bujes, terminales</p>
+                <span class="category-count">312 productos</span>
+            </a>
+
+            <a href="listado-nuevo.html?cat=motor" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3>Motor</h3>
+                <p>Correas, bujías, sensores</p>
+                <span class="category-count">428 productos</span>
+            </a>
+
+            <a href="listado-nuevo.html?cat=transmision" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3>Transmisión</h3>
+                <p>Embrague, caja, diferencial</p>
+                <span class="category-count">156 productos</span>
+            </a>
+
+            <a href="listado-nuevo.html?cat=electricos" class="category-card">
+                <div class="category-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Sistema eléctrico</h3>
+                <p>Baterías, alternadores, luces</p>
+                <span class="category-count">267 productos</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Repuestos Destacados -->
+    <section class="featured-section">
+        <div class="section-header">
+            <h2>Repuestos destacados</h2>
+            <a href="listado-nuevo.html" class="view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        <div class="products-grid">
+            <!-- Producto 1 - Compatible -->
+            <article class="product-card">
+                <div class="product-badge compatible">
+                    <i class="fas fa-check-circle"></i>
+                    Compatible con tu vehículo
+                </div>
+                <div class="product-image">
+                    <div class="product-placeholder">
+                        <i class="fas fa-filter"></i>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <span class="product-sku">REF: FA-23140-34010</span>
+                    <h3 class="product-name">Filtro de aire motor</h3>
+                    <p class="product-desc">Filtro de aire original para motores gasolina</p>
+                    <div class="product-footer">
+                        <span class="product-price">$85.000</span>
+                        <button class="btn-add-cart">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Producto 2 - Compatible -->
+            <article class="product-card">
+                <div class="product-badge compatible">
+                    <i class="fas fa-check-circle"></i>
+                    Compatible con tu vehículo
+                </div>
+                <div class="product-image">
+                    <div class="product-placeholder">
+                        <i class="fas fa-circle-notch"></i>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <span class="product-sku">REF: BP-58101-C5100</span>
+                    <h3 class="product-name">Pastillas de freno delanteras</h3>
+                    <p class="product-desc">Juego de pastillas de freno originales</p>
+                    <div class="product-footer">
+                        <span class="product-price">$145.000</span>
+                        <button class="btn-add-cart">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Producto 3 - Verificar compatibilidad -->
+            <article class="product-card">
+                <div class="product-badge verify">
+                    <i class="fas fa-question-circle"></i>
+                    <a href="#" onclick="toggleVehicleModal(); return false;">Verificar compatibilidad</a>
+                </div>
+                <div class="product-image">
+                    <div class="product-placeholder">
+                        <i class="fas fa-oil-can"></i>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <span class="product-sku">REF: FO-26300-35504</span>
+                    <h3 class="product-name">Filtro de aceite</h3>
+                    <p class="product-desc">Filtro de aceite para motor diésel</p>
+                    <div class="product-footer">
+                        <span class="product-price">$45.000</span>
+                        <button class="btn-add-cart">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Producto 4 -->
+            <article class="product-card">
+                <div class="product-badge compatible">
+                    <i class="fas fa-check-circle"></i>
+                    Compatible con tu vehículo
+                </div>
+                <div class="product-image">
+                    <div class="product-placeholder">
+                        <i class="fas fa-car-battery"></i>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <span class="product-sku">REF: BA-37110-C5100</span>
+                    <h3 class="product-name">Batería 12V 65Ah</h3>
+                    <p class="product-desc">Batería de alto rendimiento para camionetas</p>
+                    <div class="product-footer">
+                        <span class="product-price">$520.000</span>
+                        <button class="btn-add-cart">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Búsqueda por Vehículo Banner -->
+    <section class="vehicle-search-banner">
+        <div class="banner-content">
+            <div class="banner-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="banner-text">
+                <h2>¿Ya sabes qué repuesto necesitas?</h2>
+                <p>Busca directamente por referencia o identifica tu vehículo para ver compatibilidad</p>
+            </div>
+            <div class="banner-actions">
+                <button class="btn-outline" onclick="toggleVehicleModal()">
+                    <i class="fas fa-car"></i>
+                    Buscar por vehículo
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ventajas -->
+    <section class="benefits-section">
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <i class="fas fa-check-circle"></i>
+                <h4>Repuestos originales</h4>
+                <p>100% genuinos KGM</p>
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-shield-alt"></i>
+                <h4>Garantía incluida</h4>
+                <p>En todos los productos</p>
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-truck"></i>
+                <h4>Envío a todo Colombia</h4>
+                <p>Rápido y seguro</p>
+            </div>
+            <div class="benefit-item">
+                <i class="fas fa-headset"></i>
+                <h4>Soporte especializado</h4>
+                <p>Asesores técnicos</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-truck-pickup"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-brand">KGM</span>
+                        <span class="logo-sub">Repuestos</span>
+                    </div>
+                </div>
+                <p>Tienda oficial de repuestos genuinos KGM en Colombia. Compatible con vehículos SsangYong.</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Categorías</h4>
+                    <a href="#">Frenos</a>
+                    <a href="#">Suspensión</a>
+                    <a href="#">Motor</a>
+                    <a href="#">Transmisión</a>
+                </div>
+                <div class="footer-column">
+                    <h4>Ayuda</h4>
+                    <a href="#">Cómo comprar</a>
+                    <a href="#">Compatibilidad</a>
+                    <a href="#">Envíos</a>
+                    <a href="#">Devoluciones</a>
+                </div>
+                <div class="footer-column">
+                    <h4>Contacto</h4>
+                    <a href="#">Línea de atención</a>
+                    <a href="#">WhatsApp</a>
+                    <a href="#">Correo electrónico</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 KGM Repuestos Colombia. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle modal de vehículo
+        function toggleVehicleModal() {
+            const modal = document.getElementById('vehicleModal');
+            modal.classList.toggle('active');
+        }
+
+        // Tabs del modal
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                this.classList.add('active');
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Simular guardar vehículo
+        function saveVehicle() {
+            document.getElementById('vehicleModal').classList.remove('active');
+            document.getElementById('vehicleSelector').classList.add('has-vehicle');
+            document.getElementById('vehicleSaved').classList.remove('hidden');
+            document.getElementById('vehicleNotification').classList.remove('hidden');
+
+            // Mostrar badges de compatibilidad en productos
+            document.querySelectorAll('.product-badge').forEach(badge => {
+                if (badge.classList.contains('verify')) {
+                    badge.classList.remove('verify');
+                    badge.classList.add('compatible');
+                    badge.innerHTML = '<i class="fas fa-check-circle"></i> Compatible con tu vehículo';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

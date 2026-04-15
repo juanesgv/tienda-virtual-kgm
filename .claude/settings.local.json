@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type f -name *.html -o -name *.css -o -name *.js -o -name *.json -o -name *.md)",
+      "Bash(ls:*)"
+    ]
+  }
+}
