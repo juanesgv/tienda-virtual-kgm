@@ -131,6 +131,56 @@ img {
   border-color: var(--color-primary);
 }
 
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  padding: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.search-suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: 14px;
+  color: var(--color-gray-800);
+  background: none;
+}
+
+.search-suggestion-item:hover {
+  background: var(--color-gray-100);
+}
+
+.suggestion-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: var(--radius-lg);
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.suggestion-tag.category {
+  background: #E8F5E9;
+  color: var(--color-success);
+}
+
 .search-btn {
   position: absolute;
   right: 8px;
@@ -1192,6 +1242,32 @@ img {
   margin-top: 8px;
   color: var(--color-gray-600);
   font-size: 14px;
+}
+
+.corrected-query-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #FFF4E5;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--color-gray-800);
+}
+
+.corrected-query-banner svg {
+  flex-shrink: 0;
+  color: var(--color-warning);
+  margin-top: 1px;
+}
+
+.link-button {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  background: none;
+  padding: 0;
 }
 
 /* Filtros Activos */
@@ -2935,6 +3011,41 @@ img {
   font-weight: 500;
   color: var(--color-gray-700);
   transition: all 0.2s;
+}
+
+.advisor-fallback {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.advisor-preview-card {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  background: var(--color-gray-100);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.simulated-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: var(--radius-lg);
+  background: #FFF4E5;
+  color: #a3690f;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.advisor-preview-card p {
+  margin: 0;
+  color: var(--color-gray-700);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .suggested-category:hover {

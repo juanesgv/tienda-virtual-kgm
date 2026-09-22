@@ -348,6 +348,154 @@ export function searchProducts(query: string): Product[] {
   );
 }
 
+// HU-E04-01/04: búsqueda general por nombre, categoría o código de parte
+// HU-E04-01: si la búsqueda incluye un modelo de vehículo (ej. "retrovisor Korando"),
+// los repuestos compatibles con ese modelo se priorizan sobre el resto.
+export function searchProductsFull(query: string): Product[] {
+  const lowerQuery = query.toLowerCase();
+  const scored = products
+    .map(p => {
+      const matchesCore =
+        p.name.toLowerCase().includes(lowerQuery) ||
+        p.sku.toLowerCase().includes(lowerQuery) ||
+        p.description.toLowerCase().includes(lowerQuery) ||
+        p.category.toLowerCase().includes(lowerQuery) ||
+        p.subcategory.toLowerCase().includes(lowerQuery);
+      const matchesVehicle = p.compatibleVehicles.some(v =>
+        v.brand.toLowerCase().includes(lowerQuery) || v.model.toLowerCase().includes(lowerQuery)
+      );
+      if (!matchesCore && !matchesVehicle) return null;
+      return { product: p, score: matchesCore ? 2 : 1 };
+    })
+    .filter((entry): entry is { product: Product; score: number } => entry !== null);
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(entry => entry.product);
+}
+
+function normalizeTerm(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[][] = Array.from({ length: rows }, () => new Array(cols).fill(0));
+  for (let i = 0; i < rows; i++) dp[i][0] = i;
+  for (let j = 0; j < cols; j++) dp[0][j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[rows - 1][cols - 1];
+}
+
+// Vocabulario simulado para tolerancia a errores tipográficos (HU-E04-02).
+// En producción esto lo resolvería un motor de búsqueda dedicado (decisión abierta en Notion).
+let cachedVocabulary: string[] | null = null;
+function getVocabulary(): string[] {
+  if (cachedVocabulary) return cachedVocabulary;
+  const terms = new Set<string>();
+  products.forEach(p => {
+    p.name.split(/\s+/).forEach(w => terms.add(normalizeTerm(w)));
+    terms.add(normalizeTerm(p.category));
+    terms.add(normalizeTerm(p.subcategory));
+    p.compatibleVehicles.forEach(v => {
+      terms.add(normalizeTerm(v.brand));
+      v.model.split(/\s+/).forEach(w => terms.add(normalizeTerm(w)));
+    });
+  });
+  categories.forEach(c => c.name.split(/\s+/).forEach(w => terms.add(normalizeTerm(w))));
+  cachedVocabulary = Array.from(terms).filter(t => t.length >= 3);
+  return cachedVocabulary;
+}
+
+export interface SmartSearchResult {
+  results: Product[];
+  correctedQuery: string | null;
+}
+
+// HU-E04-02: si la búsqueda literal no arroja nada, intenta corregir términos
+// con error tipográfico contra un vocabulario conocido de productos/vehículos/categorías.
+export function searchProductsSmart(query: string): SmartSearchResult {
+  const trimmed = query.trim();
+  if (!trimmed) return { results: [], correctedQuery: null };
+
+  const exact = searchProductsFull(trimmed);
+  if (exact.length > 0) return { results: exact, correctedQuery: null };
+
+  const vocabulary = getVocabulary();
+  const words = trimmed.split(/\s+/);
+  let corrected = false;
+
+  const correctedWords = words.map(word => {
+    const normalized = normalizeTerm(word);
+    if (normalized.length < 3) return word;
+    if (vocabulary.some(term => term.includes(normalized) || normalized.includes(term))) return word;
+
+    let bestTerm: string | null = null;
+    let bestDistance = Infinity;
+    for (const term of vocabulary) {
+      const distance = levenshteinDistance(normalized, term);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestTerm = term;
+      }
+    }
+
+    const threshold = Math.max(1, Math.floor(normalized.length * 0.34));
+    if (bestTerm && bestDistance > 0 && bestDistance <= threshold) {
+      corrected = true;
+      return bestTerm;
+    }
+    return word;
+  });
+
+  if (!corrected) return { results: [], correctedQuery: null };
+
+  const correctedQuery = correctedWords.join(' ');
+  const fuzzyResults = searchProductsFull(correctedQuery);
+  if (fuzzyResults.length === 0) return { results: [], correctedQuery: null };
+
+  return { results: fuzzyResults, correctedQuery };
+}
+
+export interface SearchSuggestion {
+  label: string;
+  type: 'product' | 'category';
+  href: string;
+}
+
+// HU-E04-03: sugerencias en vivo mientras el usuario escribe.
+export function getSearchSuggestions(query: string, limit = 6): SearchSuggestion[] {
+  const q = normalizeTerm(query);
+  if (q.length < 2) return [];
+
+  const suggestions: SearchSuggestion[] = [];
+
+  for (const category of categories) {
+    if (normalizeTerm(category.name).includes(q)) {
+      suggestions.push({ label: category.name, type: 'category', href: `/repuestos?categoria=${category.id}` });
+    }
+  }
+
+  for (const product of products) {
+    if (suggestions.length >= limit) break;
+    if (normalizeTerm(product.name).includes(q) || normalizeTerm(product.sku).includes(q)) {
+      suggestions.push({ label: product.name, type: 'product', href: `/repuestos/${product.id}` });
+    }
+  }
+
+  return suggestions.slice(0, limit);
+}
+
 export function isProductCompatible(product: Product, vehicle: { brand: string; model: string; year: number }): boolean {
   return product.compatibleVehicles.some(v =>
     v.brand.toLowerCase() === vehicle.brand.toLowerCase() &&

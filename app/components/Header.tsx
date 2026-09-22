@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useVehicle } from "../context/VehicleContext";
 import { useCart } from "../context/CartContext";
 import { useUser } from "../context/UserContext";
+import { getSearchSuggestions } from "../data/products";
 import VehicleModal from "./VehicleModal";
 import CartDrawer from "./CartDrawer";
 import { BrandLogo } from "./BrandLogo";
@@ -16,9 +17,19 @@ export function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const { vehicle, isVehicleSaved } = useVehicle();
   const { getItemCount } = useCart();
   const { currentUser, isAuthenticated } = useUser();
+
+  // HU-E04-03: sugerencias en vivo mientras se escribe en el buscador global
+  const suggestions = useMemo(() => getSearchSuggestions(searchQuery), [searchQuery]);
+
+  const goToSuggestion = (href: string) => {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    router.push(href);
+  };
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -36,6 +47,7 @@ export function Header() {
             <form onSubmit={(e) => {
               e.preventDefault();
               if (searchQuery.trim()) {
+                setShowSuggestions(false);
                 router.push(`/buscar?q=${encodeURIComponent(searchQuery.trim())}`);
               }
             }}>
@@ -44,6 +56,12 @@ export function Header() {
                 placeholder="Buscar repuestos por nombre, referencia o categoría..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                role="combobox"
+                aria-expanded={showSuggestions && suggestions.length > 0}
+                aria-autocomplete="list"
+                autoComplete="off"
               />
               <button type="submit" className="search-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
@@ -51,6 +69,27 @@ export function Header() {
                 </svg>
               </button>
             </form>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="search-suggestions" role="listbox">
+                {suggestions.map((suggestion) => (
+                  <li key={`${suggestion.type}-${suggestion.href}`}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected="false"
+                      className="search-suggestion-item"
+                      onMouseDown={() => goToSuggestion(suggestion.href)}
+                    >
+                      <span className={`suggestion-tag ${suggestion.type}`}>
+                        {suggestion.type === "category" ? "Categoría" : "Producto"}
+                      </span>
+                      <span>{suggestion.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Acciones */}
