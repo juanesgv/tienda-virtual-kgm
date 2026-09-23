@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useVehicle } from "../context/VehicleContext";
 import { useCart } from "../context/CartContext";
 import { useUser } from "../context/UserContext";
+import { useServiceStatus } from "../context/ServiceStatusContext";
 import { getSearchSuggestions } from "../data/products";
 import VehicleModal from "./VehicleModal";
 import CartDrawer from "./CartDrawer";
@@ -18,12 +19,16 @@ export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { vehicle, isVehicleSaved } = useVehicle();
+  const { vehicle, isVehicleSaved, clearVehicle } = useVehicle();
   const { getItemCount } = useCart();
   const { currentUser, isAuthenticated } = useUser();
+  const { isInventoryDown } = useServiceStatus();
 
-  // HU-E04-03: sugerencias en vivo mientras se escribe en el buscador global
-  const suggestions = useMemo(() => getSearchSuggestions(searchQuery), [searchQuery]);
+  // HU-E04-03/E40: sugerencias en vivo mientras se escribe; se apagan si el inventario está caído
+  const suggestions = useMemo(
+    () => (isInventoryDown ? [] : getSearchSuggestions(searchQuery)),
+    [searchQuery, isInventoryDown]
+  );
 
   const goToSuggestion = (href: string) => {
     setShowSuggestions(false);
@@ -104,6 +109,11 @@ export function Header() {
                   <span className="saved-model">{vehicle.brand} {vehicle.model} {vehicle.year}</span>
                   <button className="change-vehicle" onClick={() => setIsModalOpen(true)}>
                     Cambiar
+                  </button>
+                  <button className="remove-vehicle" onClick={clearVehicle} title="Quitar vehículo activo" aria-label="Quitar vehículo activo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    </svg>
                   </button>
                 </div>
               ) : (

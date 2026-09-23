@@ -3,6 +3,7 @@ import "./globals.css";
 import { VehicleProvider } from "./context/VehicleContext";
 import { CartProvider } from "./context/CartContext";
 import { UserProvider } from "./context/UserContext";
+import { ServiceStatusProvider } from "./context/ServiceStatusContext";
 import { Header } from "./components/Header";
 import Footer from "./components/Footer";
 
@@ -25,15 +26,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <UserProvider>
-          <VehicleProvider>
-            <CartProvider>
-              <Header />
-              <main>{children}</main>
-              <Footer />
-            </CartProvider>
-          </VehicleProvider>
-        </UserProvider>
+        <ServiceStatusProvider>
+          <UserProvider>
+            <VehicleProvider>
+              <CartProvider>
+                <Header />
+                <main>{children}</main>
+                <Footer />
+              </CartProvider>
+            </VehicleProvider>
+          </UserProvider>
+        </ServiceStatusProvider>
       </body>
     </html>
   );

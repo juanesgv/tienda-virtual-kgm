@@ -1,4 +1,5 @@
 import {
+  Address,
   CreateOrderInput,
   CustomerOrder,
   LoginInput,
@@ -50,6 +51,7 @@ export function createUserAccount(input: RegisterInput): UserAccount {
     createdAt: new Date().toISOString(),
     orders: [],
     loyalty: createInitialLoyaltyState(),
+    addresses: [],
   };
 }
 
@@ -58,24 +60,48 @@ export function findUserByEmail(users: UserAccount[], email: string) {
   return users.find((user) => user.email === normalizedEmail);
 }
 
-export function validateRegistrationInput(input: RegisterInput, users: UserAccount[]) {
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export interface RegistrationFieldErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  /** Correo ya registrado: se ofrece iniciar sesión en vez de solo mostrar un error. */
+  emailTaken?: boolean;
+}
+
+// HU-E09-01: errores específicos por campo, no un solo mensaje genérico
+export function validateRegistrationInputFields(
+  input: RegisterInput,
+  users: UserAccount[]
+): RegistrationFieldErrors {
+  const errors: RegistrationFieldErrors = {};
+
   if (!input.name.trim()) {
-    return "Ingresa tu nombre.";
+    errors.name = "Ingresa tu nombre.";
   }
 
   if (!normalizeEmail(input.email)) {
-    return "Ingresa un correo válido.";
-  }
-
-  if (findUserByEmail(users, input.email)) {
-    return "Ya existe una cuenta con este correo.";
+    errors.email = "Ingresa tu correo.";
+  } else if (!EMAIL_PATTERN.test(normalizeEmail(input.email))) {
+    errors.email = "Ingresa un correo con formato válido.";
+  } else if (findUserByEmail(users, input.email)) {
+    errors.email = "Ya existe una cuenta con este correo.";
+    errors.emailTaken = true;
   }
 
   if (input.password.trim().length < 6) {
-    return "La contraseña debe tener al menos 6 caracteres.";
+    errors.password = "La contraseña debe tener al menos 6 caracteres.";
   }
 
-  return null;
+  return errors;
+}
+
+export function createAddress(input: Omit<Address, "id">): Address {
+  return {
+    ...input,
+    id: `addr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  };
 }
 
 export function validateLoginInput(input: LoginInput) {

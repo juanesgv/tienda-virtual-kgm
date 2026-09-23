@@ -6,11 +6,13 @@ import { categories, products } from "./data/products";
 import ProductCard from "./components/ProductCard";
 import VehicleModal from "./components/VehicleModal";
 import { useVehicle } from "./context/VehicleContext";
+import { useServiceStatus } from "./context/ServiceStatusContext";
 import PromoCarousel from "./components/PromoCarousel";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { vehicle, isVehicleSaved } = useVehicle();
+  const { isInventoryDown } = useServiceStatus();
 
   // Productos destacados (primeros 4)
   const featuredProducts = products.slice(0, 4);
@@ -117,11 +119,18 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="products-grid">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {/* HU-E40: sección de destacados degradada si el inventario no responde (el resto de Home sigue funcionando) */}
+        {isInventoryDown ? (
+          <div className="featured-unavailable">
+            <p>No pudimos cargar los repuestos destacados en este momento. El resto de la tienda sigue disponible.</p>
+          </div>
+        ) : (
+          <div className="products-grid">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Búsqueda por Vehículo Banner */}

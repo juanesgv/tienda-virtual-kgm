@@ -2,15 +2,23 @@
 
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
-import { formatPrice as formatProductPrice } from "../data/products";
+import { formatPrice as formatProductPrice, getCompatibilityStatus } from "../data/products";
+import { useVehicle } from "../context/VehicleContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const COMPAT_LABEL: Record<string, string> = {
+  compatible: "Compatible",
+  not_compatible: "No compatible",
+  unknown: "Verificar",
+};
+
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeFromCart, updateQuantity, getSubtotal, getShippingCost, getTotal, clearCart } = useCart();
+  const { vehicle, isVehicleSaved } = useVehicle();
 
   if (!isOpen) return null;
 
@@ -43,6 +51,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <Link href="/repuestos" className="btn-primary" onClick={onClose}>
                 Explorar repuestos
               </Link>
+              {/* HU-E10-05: si hay vehículo activo, ofrecer ir directo a lo compatible */}
+              {isVehicleSaved && vehicle && (
+                <Link href="/repuestos?compatible=true" className="link-button cart-empty-compat-link" onClick={onClose}>
+                  Ver repuestos compatibles con tu {vehicle.brand} {vehicle.model}
+                </Link>
+              )}
             </div>
           ) : (
             <>
@@ -63,6 +77,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         <h4>{item.product.name}</h4>
                       </Link>
                       <p className="cart-item-sku">Ref: {item.product.sku}</p>
+                      {/* HU-E10-03/E10-04: estado de compatibilidad visible y persistente en el carrito */}
+                      {isVehicleSaved && vehicle && (
+                        <span className={`cart-item-compat ${getCompatibilityStatus(item.product, vehicle)}`}>
+                          {COMPAT_LABEL[getCompatibilityStatus(item.product, vehicle)]}
+                        </span>
+                      )}
+                      <p className="cart-item-unit-price">{formatProductPrice(item.product.price)} c/u</p>
                       <div className="cart-item-actions">
                         <div className="quantity-selector small">
                           <button

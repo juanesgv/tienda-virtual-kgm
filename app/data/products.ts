@@ -12,6 +12,15 @@ export interface Product {
   compatibleVehicles: VehicleCompatibility[];
   specifications: Record<string, string>;
   image?: string;
+  // HU-E07-02: simula que la ficha de compatibilidad de este producto en SIISA está incompleta.
+  // false = no se puede afirmar ni negar compatibilidad para vehículos que no están en la lista
+  // (en vez de asumir "no compatible" por defecto). Si se omite, se asume true (dato verificado).
+  compatibilityVerified?: boolean;
+  // HU-E06-04/E13-02: unidades reales disponibles. Si se omite, no se limita la cantidad en el carrito.
+  stockQuantity?: number;
+  // HU-E13-01: referencia descontinuada — nunca debe aparecer en catálogo, búsqueda ni categorías,
+  // pero sigue siendo accesible por enlace directo (ej. un bookmark viejo) con un estado propio.
+  discontinued?: boolean;
 }
 
 const img = {
@@ -53,8 +62,8 @@ export const categories: Category[] = [
   { id: 'carroceria', name: 'Carrocería', description: 'Parachoques, espejos, puertas', icon: 'car', count: 198 },
 ];
 
-// Productos genéricos
-export const products: Product[] = [
+// Productos genéricos (incluye descontinuados; usar `products` para catálogo/búsqueda)
+export const allProducts: Product[] = [
   {
     id: 'filtro-aire-1',
     name: 'Filtro de aire motor',
@@ -90,6 +99,8 @@ export const products: Product[] = [
     price: 145000,
     description: 'Juego de pastillas de freno originales de alto rendimiento para condiciones normales de conducción.',
     stock: 'in_stock',
+    // HU-E13-01: simula una referencia descontinuada, para demostrar que desaparece del catálogo/búsqueda.
+    discontinued: true,
     compatibleVehicles: [
       { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
       { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
@@ -112,6 +123,7 @@ export const products: Product[] = [
     price: 45000,
     description: 'Filtro de aceite para motor diésel de alta capacidad de retención de partículas.',
     stock: 'low_stock',
+    stockQuantity: 3,
     compatibleVehicles: [
       { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
       { brand: 'KGM', model: 'Rexton', years: '2018 - 2024' },
@@ -162,6 +174,8 @@ export const products: Product[] = [
       { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
       { brand: 'SsangYong', model: 'Korando', years: '2017 - 2022' },
     ],
+    // Simula un hueco real de datos en SIISA: solo se registró Korando, sin confirmar si aplica a otros modelos del motor.
+    compatibilityVerified: false,
     specifications: {
       referencia: 'CM-67103-31010',
       tipo: 'Correa dentada',
@@ -243,6 +257,7 @@ export const products: Product[] = [
     price: 280000,
     description: 'Disco de freno ventilado de alto rendimiento con tratamiento anticorrosión.',
     stock: 'low_stock',
+    stockQuantity: 2,
     compatibleVehicles: [
       { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
       { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
@@ -264,7 +279,7 @@ export const products: Product[] = [
     subcategory: 'bujias',
     price: 75000,
     description: 'Bujía de iridio de larga duración para motores gasolina.',
-    stock: 'in_stock',
+    stock: 'out_of_stock',
     compatibleVehicles: [
       { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
       { brand: 'KGM', model: 'Tivoli XLV', years: '2016 - 2024' },
@@ -321,6 +336,9 @@ export const products: Product[] = [
   },
 ];
 
+// HU-E13-01: catálogo/búsqueda nunca muestran referencias descontinuadas.
+export const products: Product[] = allProducts.filter(p => !p.discontinued);
+
 // Funciones de utilidad
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -331,8 +349,10 @@ export function formatPrice(price: number): string {
   }).format(price);
 }
 
+// Busca en TODO el catálogo (incluye descontinuados) para que un enlace directo antiguo
+// siga resolviendo a la ficha del producto, aunque ya no aparezca en catálogo ni búsqueda.
 export function getProductById(id: string): Product | undefined {
-  return products.find(p => p.id === id);
+  return allProducts.find(p => p.id === id);
 }
 
 export function getProductsByCategory(categoryId: string): Product[] {
@@ -505,4 +525,18 @@ export function isProductCompatible(product: Product, vehicle: { brand: string; 
 
 export function getCompatibleProducts(vehicle: { brand: string; model: string; year: number }): Product[] {
   return products.filter(p => isProductCompatible(p, vehicle));
+}
+
+// HU-E07-02: estado de compatibilidad de 3 valores. "unknown" ocurre cuando el vehículo no
+// aparece en la lista de compatibles Y el producto tiene datos de SIISA marcados como incompletos
+// (compatibilityVerified === false) — nunca debe presentarse como "no compatible".
+export type CompatibilityStatus = 'compatible' | 'not_compatible' | 'unknown';
+
+export function getCompatibilityStatus(
+  product: Product,
+  vehicle: { brand: string; model: string; year: number }
+): CompatibilityStatus {
+  if (isProductCompatible(product, vehicle)) return 'compatible';
+  if (product.compatibilityVerified === false) return 'unknown';
+  return 'not_compatible';
 }

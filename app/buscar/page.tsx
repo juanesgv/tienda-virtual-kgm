@@ -6,12 +6,15 @@ import { useSearchParams } from "next/navigation";
 import { categories, searchProductsSmart, searchProductsFull, isProductCompatible } from "../data/products";
 import ProductCard from "../components/ProductCard";
 import VehicleModal from "../components/VehicleModal";
+import ServiceUnavailable from "../components/ServiceUnavailable";
 import { useVehicle } from "../context/VehicleContext";
+import { useServiceStatus } from "../context/ServiceStatusContext";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
   const { vehicle, isVehicleSaved } = useVehicle();
+  const { isInventoryDown } = useServiceStatus();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showOnlyCompatible, setShowOnlyCompatible] = useState(false);
   const [sortBy, setSortBy] = useState("relevancia");
@@ -65,6 +68,16 @@ export default function SearchPage() {
     setForceOriginalTerm(false);
     setShowAdvisorPreview(false);
   }, [query]);
+
+  // HU-E40: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página)
+  if (isInventoryDown) {
+    return (
+      <ServiceUnavailable
+        title="No pudimos completar tu búsqueda"
+        description="Estamos teniendo problemas para conectarnos con el sistema de inventario. Intenta de nuevo en unos minutos."
+      />
+    );
+  }
 
   return (
     <>

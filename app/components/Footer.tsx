@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { BrandLogo } from "./BrandLogo";
+import { useServiceStatus } from "../context/ServiceStatusContext";
 
 export default function Footer() {
+  const { isInventoryDown, toggleInventoryDown } = useServiceStatus();
+
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -36,6 +39,11 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <p>© 2026 KGM Repuestos Colombia. Todos los derechos reservados.</p>
+        {/* HU-E40: interruptor de demo para presentar el escenario "catálogo/SIISA caído" */}
+        <button type="button" className="demo-toggle" onClick={toggleInventoryDown}>
+          <span className={`demo-toggle-dot ${isInventoryDown ? "on" : ""}`} />
+          Modo demo: simular fallo del catálogo {isInventoryDown ? "(activo)" : ""}
+        </button>
       </div>
     </footer>
   );
