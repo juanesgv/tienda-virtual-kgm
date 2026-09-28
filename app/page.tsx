@@ -7,10 +7,12 @@ import ProductCard from "./components/ProductCard";
 import VehicleModal from "./components/VehicleModal";
 import { useVehicle } from "./context/VehicleContext";
 import { useServiceStatus } from "./context/ServiceStatusContext";
+import { useAdvisor } from "./context/AdvisorContext";
 import PromoCarousel from "./components/PromoCarousel";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openAdvisor } = useAdvisor();
   const { vehicle, isVehicleSaved } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
 
@@ -101,7 +103,7 @@ export default function Home() {
               </div>
               <h3>{category.name}</h3>
               <p>{category.description}</p>
-              <span className="category-count">{category.count} productos</span>
+              <span className="category-count">{category.count === 0 ? "Sin productos por ahora" : `${category.count} ${category.count === 1 ? "producto" : "productos"}`}</span>
             </Link>
           ))}
         </div>
@@ -186,6 +188,9 @@ export default function Home() {
             </svg>
             <h4>Soporte especializado</h4>
             <p>Asesores técnicos</p>
+            <button type="button" className="link-button" onClick={() => openAdvisor({ origin: "home" })}>
+              ¿No sabes qué repuesto necesitas? Habla con un asesor
+            </button>
           </div>
         </div>
       </section>

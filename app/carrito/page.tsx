@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import { useCart, CartDiscrepancy } from "../context/CartContext";
 import { useUser } from "../context/UserContext";
 import { useVehicle } from "../context/VehicleContext";
-import { formatPrice, getCompatibilityStatus } from "../data/products";
+import { formatPrice } from "../data/products";
+import { getLineCompatibility } from "../lib/cartLine";
+import ShippingProgress from "../components/ShippingProgress";
 import { Address } from "../types/account";
 import CartRevalidationModal from "../components/CartRevalidationModal";
 
 const COMPAT_LABEL: Record<string, string> = {
-  compatible: "Compatible con tu vehículo",
-  not_compatible: "No compatible con tu vehículo",
-  unknown: "Verificar compatibilidad",
+  compatible: "Compatible con",
+  not_compatible: "No compatible con",
+  unknown: "Verificar compatibilidad con",
 };
 
 export default function CartPage() {
@@ -233,11 +235,15 @@ export default function CartPage() {
                   </Link>
                   <p className="cart-item-ref">Ref: {item.product.sku}</p>
                   {/* HU-E10-03/E10-04: estado de compatibilidad visible y persistente en el carrito */}
-                  {isVehicleSaved && vehicle && (
-                    <span className={`cart-item-compat ${getCompatibilityStatus(item.product, vehicle)}`}>
-                      {COMPAT_LABEL[getCompatibilityStatus(item.product, vehicle)]}
-                    </span>
-                  )}
+                  {/* HU-E10-03/E10-04: compatibilidad de la línea, nombrando el vehículo evaluado */}
+                  {(() => {
+                    const line = getLineCompatibility(item, isVehicleSaved ? vehicle : null);
+                    return line ? (
+                      <span className={`cart-item-compat ${line.status}`}>
+                        {COMPAT_LABEL[line.status]} {line.vehicle.brand} {line.vehicle.model} {line.vehicle.year}
+                      </span>
+                    ) : null;
+                  })()}
                   <p className="cart-item-price-unit">{formatPrice(item.product.price)} c/u</p>
                 </div>
 
@@ -245,13 +251,18 @@ export default function CartPage() {
                   <div className="quantity-selector">
                     <button
                       className="qty-btn"
+                      aria-label={`Disminuir cantidad de ${item.product.name}`}
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                       disabled={item.quantity <= 1}
                     >
                       -
                     </button>
-                    <input type="number" value={item.quantity} min="1" readOnly />
-                    <button className="qty-btn" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
+                    <input type="number" value={item.quantity} min="1" readOnly aria-label={`Cantidad de ${item.product.name}`} />
+                    <button
+                      className="qty-btn"
+                      aria-label={`Aumentar cantidad de ${item.product.name}`}
+                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    >
                       +
                     </button>
                   </div>
@@ -261,7 +272,7 @@ export default function CartPage() {
                   <span>{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
 
-                <button className="cart-item-remove-btn" onClick={() => removeFromCart(item.product.id)} title="Eliminar">
+                <button className="cart-item-remove-btn" onClick={() => removeFromCart(item.product.id)} title="Eliminar" aria-label={`Eliminar ${item.product.name} del carrito`}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
@@ -287,6 +298,9 @@ export default function CartPage() {
           <div className="cart-summary-card">
             <h3>Resumen del pedido</h3>
 
+            {/* HU-E18-02/03: condición del envío gratis y cuánto falta, visible antes del checkout */}
+            <ShippingProgress subtotal={subtotal} />
+
             <div className="summary-rows">
               <div className="summary-row">
                 <span>Subtotal</span>
@@ -294,15 +308,10 @@ export default function CartPage() {
               </div>
               <div className="summary-row">
                 <span>Envío</span>
-                <span>{shippingCost === 0 ? "Gratis" : formatPrice(shippingCost)}</span>
+                <span>{shippingCost === 0 ? "Gratis" : `${formatPrice(shippingCost)} (tarifa plana)`}</span>
               </div>
               {/* HU-E11-02: tiempo estimado, no solo costo. El costo por zona/cobertura sigue siendo decisión abierta (E18). */}
               <p className="shipping-eta">Entrega estimada: 3 a 5 días hábiles</p>
-              {shippingCost > 0 && (
-                <p className="shipping-promo">
-                  Envío gratis en compras mayores a {formatPrice(500000)}
-                </p>
-              )}
               {loyaltyDiscount > 0 && (
                 <div className="summary-row discount">
                   <span>Descuento fidelización</span>

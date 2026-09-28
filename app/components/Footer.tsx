@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { BrandLogo } from "./BrandLogo";
 import { useServiceStatus } from "../context/ServiceStatusContext";
+import { useAdvisor } from "../context/AdvisorContext";
 
 export default function Footer() {
   const { isInventoryDown, toggleInventoryDown } = useServiceStatus();
+  const { openAdvisor } = useAdvisor();
 
   return (
     <footer className="footer">
@@ -23,23 +25,24 @@ export default function Footer() {
             <Link href="/repuestos?categoria=filtros">Filtros</Link>
           </div>
           <div className="footer-column">
-            <h4>Ayuda</h4>
-            <Link href="#">Cómo comprar</Link>
-            <Link href="#">Compatibilidad</Link>
-            <Link href="#">Envíos</Link>
-            <Link href="#">Devoluciones</Link>
+            <h4>Mi tienda</h4>
+            <Link href="/repuestos">Catálogo de repuestos</Link>
+            <Link href="/cuenta">Mi cuenta y pedidos</Link>
+            <Link href="/carrito">Mi carrito</Link>
           </div>
           <div className="footer-column">
             <h4>Contacto</h4>
-            <Link href="#">Línea de atención</Link>
-            <Link href="#">WhatsApp</Link>
-            <Link href="#">Correo electrónico</Link>
+            {/* E54: los tres canales abren el mismo flujo de asesoría simulado; el canal real está por definir */}
+            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>Línea de atención</button>
+            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>WhatsApp</button>
+            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>Correo electrónico</button>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
         <p>© 2026 KGM Repuestos Colombia. Todos los derechos reservados.</p>
         {/* HU-E40: interruptor de demo para presentar el escenario "catálogo/SIISA caído" */}
+        <Link href="/asesoria/registro" className="demo-toggle">Demo: registro de solicitudes de asesoría</Link>
         <button type="button" className="demo-toggle" onClick={toggleInventoryDown}>
           <span className={`demo-toggle-dot ${isInventoryDown ? "on" : ""}`} />
           Modo demo: simular fallo del catálogo {isInventoryDown ? "(activo)" : ""}

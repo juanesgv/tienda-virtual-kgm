@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useAdvisor } from "../context/AdvisorContext";
 
 interface ServiceUnavailableProps {
   title?: string;
@@ -14,7 +14,7 @@ export default function ServiceUnavailable({
   title = "No pudimos cargar el catálogo en este momento",
   description = "Estamos teniendo problemas para conectarnos con el sistema de inventario. Tus datos y tu carrito están a salvo — intenta de nuevo en unos minutos.",
 }: ServiceUnavailableProps) {
-  const [showAdvisorPreview, setShowAdvisorPreview] = useState(false);
+  const { openAdvisor } = useAdvisor();
 
   return (
     <div className="service-unavailable">
@@ -32,16 +32,9 @@ export default function ServiceUnavailable({
         </Link>
       </div>
 
-      {!showAdvisorPreview ? (
-        <button type="button" className="link-button" onClick={() => setShowAdvisorPreview(true)}>
-          ¿Necesitas ayuda ahora? Habla con un asesor
-        </button>
-      ) : (
-        <div className="advisor-preview-card">
-          <span className="simulated-badge">Vista previa simulada · Bloque 7</span>
-          <p>En la versión conectada, aquí se abriría un canal de asesoría mientras el catálogo se restablece.</p>
-        </div>
-      )}
+      <button type="button" className="link-button" onClick={() => openAdvisor({ origin: "service_down" })}>
+        ¿Necesitas ayuda ahora? Habla con un asesor
+      </button>
     </div>
   );
 }

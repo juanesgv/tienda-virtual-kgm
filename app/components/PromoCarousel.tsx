@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 type PromoSlide = {
   id: string;
@@ -13,6 +14,7 @@ type PromoSlide = {
   imageUrl?: string;
   gradient?: string;
   ctaText?: string;
+  href?: string;
 };
 
 export default function PromoCarousel() {
@@ -25,7 +27,6 @@ export default function PromoCarousel() {
         description:
           "Promoción aplicada en el carrito. Compatible con repuestos genuinos KGM.",
         gradient: "linear-gradient(135deg, #3F3953 0%, #7a5cff 100%)",
-        ctaText: "Ver bono",
       },
       {
         id: "promo-mantenimiento",
@@ -36,6 +37,7 @@ export default function PromoCarousel() {
         gradient:
           "linear-gradient(135deg, rgba(63,57,83,1) 0%, rgba(43,191,123,0.95) 100%)",
         ctaText: "Explorar kits",
+        href: "/repuestos?categoria=filtros",
       },
       {
         id: "promo-frenos",
@@ -45,6 +47,7 @@ export default function PromoCarousel() {
           "Encuentra piezas para tu KGM o SsangYong. Luego aplica tu placa/VIN para validar compatibilidad.",
         gradient: "linear-gradient(135deg, #2bbf7b 0%, #3F3953 100%)",
         ctaText: "Ver frenos",
+        href: "/repuestos?categoria=frenos",
       },
     ],
     []
@@ -84,15 +87,13 @@ export default function PromoCarousel() {
           <h2 className="promo-title">{active.title}</h2>
           <p className="promo-description">{active.description}</p>
           <div className="promo-cta-row">
-            <button
-              type="button"
-              className="btn-main promo-cta"
-              onClick={() => {
-                // Mock: en una implementación real, redirigir a landing/promo
-              }}
-            >
-              {active.ctaText ?? "Ver promoción"}
-            </button>
+            {/* Promociones ilustrativas: las condiciones reales (bonos, kits) siguen por definir con el negocio */}
+            {active.href && active.ctaText && (
+              <Link href={active.href} className="btn-main promo-cta">
+                {active.ctaText}
+              </Link>
+            )}
+            <span className="simulated-badge">Promoción ilustrativa</span>
           </div>
         </div>
       </div>

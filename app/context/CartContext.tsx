@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getProductById, Product } from "../data/products";
+import { getShipping } from "../data/shipping";
 import { OrderItemSnapshot, OrderItemVehicle } from "../types/account";
 
 // HU-E17-02: qué pasó al intentar agregar de nuevo cada línea de un pedido anterior
@@ -31,7 +32,7 @@ export interface AddToCartResult {
 export interface CartDiscrepancy {
   productId: string;
   productName: string;
-  type: "out_of_stock" | "quantity_reduced" | "price_changed";
+  type: "out_of_stock" | "discontinued" | "quantity_reduced" | "price_changed";
   oldQuantity?: number;
   newQuantity?: number;
   oldPrice?: number;
@@ -59,8 +60,6 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const SHIPPING_THRESHOLD = 500000; // Envío gratis por compras mayores a $500.000
-const SHIPPING_COST = 25000; // Costo de envío estándar
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -148,10 +147,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
   };
 
-  const getShippingCost = () => {
-    const subtotal = getSubtotal();
-    return subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-  };
+  // D3: umbral y tarifa centralizados en data/shipping.ts (valores de ejemplo hasta que se decida)
+  const getShippingCost = () => getShipping(getSubtotal()).cost;
 
   const getTotal = () => {
     return getSubtotal() + getShippingCost();
@@ -163,7 +160,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     items.forEach((item) => {
       const live = getProductById(item.product.id);
-      if (!live) return;
+      // Referencia descontinuada o que ya no existe en el catálogo: no se puede comprar
+      if (!live || live.discontinued) {
+        discrepancies.push({ productId: item.product.id, productName: item.product.name, type: "discontinued" });
+        return;
+      }
 
       if (live.stock === "out_of_stock") {
         discrepancies.push({ productId: item.product.id, productName: live.name, type: "out_of_stock" });
@@ -198,7 +199,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const applyDiscrepancies = (discrepancies: CartDiscrepancy[]) => {
     setItems((currentItems) => {
       let next = currentItems.filter(
-        (item) => !discrepancies.some((d) => d.type === "out_of_stock" && d.productId === item.product.id)
+        (item) => !discrepancies.some((d) => (d.type === "out_of_stock" || d.type === "discontinued") && d.productId === item.product.id)
       );
 
       next = next.map((item) => {

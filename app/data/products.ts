@@ -12,15 +12,26 @@ export interface Product {
   compatibleVehicles: VehicleCompatibility[];
   specifications: Record<string, string>;
   image?: string;
-  // HU-E07-02: simula que la ficha de compatibilidad de este producto en SIISA está incompleta.
-  // false = no se puede afirmar ni negar compatibilidad para vehículos que no están en la lista
-  // (en vez de asumir "no compatible" por defecto). Si se omite, se asume true (dato verificado).
-  compatibilityVerified?: boolean;
   // HU-E06-04/E13-02: unidades reales disponibles. Si se omite, no se limita la cantidad en el carrito.
   stockQuantity?: number;
   // HU-E13-01: referencia descontinuada — nunca debe aparecer en catálogo, búsqueda ni categorías,
   // pero sigue siendo accesible por enlace directo (ej. un bookmark viejo) con un estado propio.
   discontinued?: boolean;
+  // E55 (posible funcionalidad, dato aún sin dueño): relaciones curadas a mano. Si se omite, NO significa
+  // que no falte nada: significa que no hay información cargada (HU-E55-03).
+  relations?: ProductRelation[];
+  // Instalación compleja: si no hay relaciones cargadas, se ofrece consultar con un asesor (HU-E55-03).
+  complexInstall?: boolean;
+}
+
+// HU-E55-02: tipos de relación candidatos según Notion (la lista definitiva la define Posventa).
+export type ProductRelationType = 'required' | 'replaced_together' | 'recommended';
+
+export interface ProductRelation {
+  productId: string;
+  type: ProductRelationType;
+  /** HU-E55-02: por qué se necesita o se recomienda */
+  reason: string;
 }
 
 const img = {
@@ -50,17 +61,6 @@ export interface Category {
   icon: string;
   count: number;
 }
-
-// Categorías disponibles
-export const categories: Category[] = [
-  { id: 'frenos', name: 'Frenos', description: 'Discos, pastillas, calipers', icon: 'circle-notch', count: 245 },
-  { id: 'filtros', name: 'Filtros', description: 'Aire, aceite, combustible', icon: 'filter', count: 189 },
-  { id: 'suspension', name: 'Suspensión', description: 'Amortiguadores, bujes, terminales', icon: 'compress-arrows-alt', count: 312 },
-  { id: 'motor', name: 'Motor', description: 'Correas, bujías, sensores', icon: 'cog', count: 428 },
-  { id: 'transmision', name: 'Transmisión', description: 'Embrague, caja, diferencial', icon: 'cogs', count: 156 },
-  { id: 'electricos', name: 'Sistema eléctrico', description: 'Baterías, alternadores, luces', icon: 'bolt', count: 267 },
-  { id: 'carroceria', name: 'Carrocería', description: 'Parachoques, espejos, puertas', icon: 'car', count: 198 },
-];
 
 // Productos genéricos (incluye descontinuados; usar `products` para catálogo/búsqueda)
 export const allProducts: Product[] = [
@@ -137,6 +137,9 @@ export const allProducts: Product[] = [
       garantia: '12 meses',
     },
     image: img.engineParts,
+    relations: [
+      { productId: 'aceite-motor-1', type: 'required', reason: 'Al cambiar el filtro se drena el aceite del motor; sin aceite nuevo la instalación no se completa.' },
+    ],
   },
   {
     id: 'bateria-1',
@@ -170,12 +173,9 @@ export const allProducts: Product[] = [
     price: 280000,
     description: 'Correa de distribución de alta resistencia para motores gasolina.',
     stock: 'in_stock',
-    compatibleVehicles: [
-      { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
-      { brand: 'SsangYong', model: 'Korando', years: '2017 - 2022' },
-    ],
-    // Simula un hueco real de datos en SIISA: solo se registró Korando, sin confirmar si aplica a otros modelos del motor.
-    compatibilityVerified: false,
+    // Simula "sin datos" (Modelo conceptual §3): referencia sin aplicabilidad cargada en SIISA.
+    // Es deuda de datos, no un caso de negocio estable.
+    compatibleVehicles: [],
     specifications: {
       referencia: 'CM-67103-31010',
       tipo: 'Correa dentada',
@@ -183,6 +183,11 @@ export const allProducts: Product[] = [
       garantia: '12 meses',
     },
     image: img.engineParts,
+    complexInstall: true,
+    relations: [
+      { productId: 'tensor-correa-1', type: 'required', reason: 'Se cambia junto con la correa: un tensor desgastado vuelve a dañar la correa nueva.' },
+      { productId: 'bomba-agua-1', type: 'replaced_together', reason: 'Comparte el acceso con la correa; se suele cambiar en la misma intervención para no desarmar dos veces.' },
+    ],
   },
   {
     id: 'amortiguador-1',
@@ -204,6 +209,7 @@ export const allProducts: Product[] = [
       garantia: '18 meses',
     },
     image: img.engineParts,
+    complexInstall: true,
   },
   {
     id: 'filtro-combustible-1',
@@ -270,6 +276,11 @@ export const allProducts: Product[] = [
       garantia: '12 meses',
     },
     image: img.discBrake,
+    complexInstall: true,
+    relations: [
+      { productId: 'pastillas-freno-1', type: 'replaced_together', reason: 'Discos y pastillas se reemplazan juntos.' },
+      { productId: 'liquido-frenos-1', type: 'recommended', reason: 'Conviene revisarlo al intervenir el sistema de frenos; no es indispensable para instalar el disco.' },
+    ],
   },
   {
     id: 'bujia-1',
@@ -333,11 +344,90 @@ export const allProducts: Product[] = [
       garantia: '12 meses',
     },
     image: img.engineParts,
+    complexInstall: true,
+  },
+  // Complementos de ejemplo para E55 (curaduría ilustrativa, por validar con Posventa)
+  {
+    id: 'tensor-correa-1',
+    name: 'Tensor de correa de distribución',
+    sku: 'TN-67104-31020',
+    category: 'motor',
+    subcategory: 'correas',
+    price: 190000,
+    description: 'Tensor con rodamiento para correa de distribución.',
+    stock: 'in_stock',
+    compatibleVehicles: [{ brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' }],
+    specifications: { referencia: 'TN-67104-31020', tipo: 'Tensor con rodamiento', garantia: '12 meses' },
+    image: img.engineParts,
+  },
+  {
+    id: 'bomba-agua-1',
+    name: 'Bomba de agua',
+    sku: 'BA-21100-32080',
+    category: 'motor',
+    subcategory: 'refrigeracion',
+    price: 320000,
+    description: 'Bomba de agua para el sistema de refrigeración del motor.',
+    stock: 'out_of_stock',
+    compatibleVehicles: [{ brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' }],
+    specifications: { referencia: 'BA-21100-32080', tipo: 'Mecánica', garantia: '12 meses' },
+    image: img.engineParts,
+  },
+  {
+    id: 'aceite-motor-1',
+    name: 'Aceite de motor 5W-30 (4 L)',
+    sku: 'AM-00530-4L',
+    category: 'motor',
+    subcategory: 'lubricantes',
+    price: 165000,
+    description: 'Aceite sintético 5W-30 para motores gasolina y diésel.',
+    stock: 'in_stock',
+    compatibleVehicles: [
+      { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
+      { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
+      { brand: 'KGM', model: 'Rexton', years: '2018 - 2024' },
+    ],
+    specifications: { referencia: 'AM-00530-4L', viscosidad: '5W-30', contenido: '4 L' },
+    image: img.engineParts,
+  },
+  {
+    id: 'liquido-frenos-1',
+    name: 'Líquido de frenos DOT 4',
+    sku: 'LF-DOT4-500',
+    category: 'frenos',
+    subcategory: 'liquidos',
+    price: 38000,
+    description: 'Líquido de frenos DOT 4, envase de 500 ml.',
+    stock: 'in_stock',
+    compatibleVehicles: [
+      { brand: 'KGM', model: 'Tivoli', years: '2015 - 2024' },
+      { brand: 'KGM', model: 'Korando', years: '2019 - 2024' },
+      { brand: 'KGM', model: 'Rexton', years: '2018 - 2024' },
+    ],
+    specifications: { referencia: 'LF-DOT4-500', norma: 'DOT 4', contenido: '500 ml' },
+    image: img.discBrake,
   },
 ];
 
 // HU-E13-01: catálogo/búsqueda nunca muestran referencias descontinuadas.
 export const products: Product[] = allProducts.filter(p => !p.discontinued);
+
+const categoryDefinitions: Omit<Category, 'count'>[] = [
+  { id: 'frenos', name: 'Frenos', description: 'Discos, pastillas, calipers', icon: 'circle-notch' },
+  { id: 'filtros', name: 'Filtros', description: 'Aire, aceite, combustible', icon: 'filter' },
+  { id: 'suspension', name: 'Suspensión', description: 'Amortiguadores, bujes, terminales', icon: 'compress-arrows-alt' },
+  { id: 'motor', name: 'Motor', description: 'Correas, bujías, sensores', icon: 'cog' },
+  { id: 'transmision', name: 'Transmisión', description: 'Embrague, caja, diferencial', icon: 'cogs' },
+  { id: 'electricos', name: 'Sistema eléctrico', description: 'Baterías, alternadores, luces', icon: 'bolt' },
+  { id: 'carroceria', name: 'Carrocería', description: 'Parachoques, espejos, puertas', icon: 'car' },
+];
+
+// El contador sale de los productos realmente visibles en el catálogo (sin descontinuados)
+export const categories: Category[] = categoryDefinitions.map((c) => ({
+  ...c,
+  count: products.filter((p) => p.category === c.id).length,
+}));
+
 
 // Funciones de utilidad
 export function formatPrice(price: number): string {
@@ -371,26 +461,95 @@ export function searchProducts(query: string): Product[] {
 // HU-E04-01/04: búsqueda general por nombre, categoría o código de parte
 // HU-E04-01: si la búsqueda incluye un modelo de vehículo (ej. "retrovisor Korando"),
 // los repuestos compatibles con ese modelo se priorizan sobre el resto.
-export function searchProductsFull(query: string): Product[] {
-  const lowerQuery = query.toLowerCase();
-  const scored = products
-    .map(p => {
-      const matchesCore =
-        p.name.toLowerCase().includes(lowerQuery) ||
-        p.sku.toLowerCase().includes(lowerQuery) ||
-        p.description.toLowerCase().includes(lowerQuery) ||
-        p.category.toLowerCase().includes(lowerQuery) ||
-        p.subcategory.toLowerCase().includes(lowerQuery);
-      const matchesVehicle = p.compatibleVehicles.some(v =>
-        v.brand.toLowerCase().includes(lowerQuery) || v.model.toLowerCase().includes(lowerQuery)
-      );
-      if (!matchesCore && !matchesVehicle) return null;
-      return { product: p, score: matchesCore ? 2 : 1 };
-    })
-    .filter((entry): entry is { product: Product; score: number } => entry !== null);
+const STOPWORDS = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'para', 'con', 'y', 'en', 'a', 'al', 'un', 'una', 'mi', 'por']);
+const YEAR_TOKEN = /^(19|20)\d{2}$/;
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.map(entry => entry.product);
+// Plurales simples ("pastillas" → "pastilla", "amortiguadores" → "amortiguador")
+function stemToken(token: string): string {
+  if (token.length > 5 && token.endsWith('es')) return token.slice(0, -2);
+  if (token.length > 4 && token.endsWith('s')) return token.slice(0, -1);
+  return token;
+}
+
+function includesToken(text: string, token: string): boolean {
+  return text.includes(token) || text.includes(stemToken(token));
+}
+
+function tokenizeQuery(query: string): string[] {
+  return normalizeTerm(query).split(/\s+/).filter(t => t && !STOPWORDS.has(t));
+}
+
+// Palabras que identifican vehículos (marcas y modelos presentes en el catálogo)
+let cachedVehicleTerms: Set<string> | null = null;
+function getVehicleTerms(): Set<string> {
+  if (cachedVehicleTerms) return cachedVehicleTerms;
+  const terms = new Set<string>();
+  products.forEach(p =>
+    p.compatibleVehicles.forEach(v => {
+      normalizeTerm(v.brand).split(/\s+/).forEach(w => terms.add(w));
+      normalizeTerm(v.model).split(/\s+/).forEach(w => terms.add(w));
+    })
+  );
+  cachedVehicleTerms = terms;
+  return terms;
+}
+
+function getSearchFields(p: Product) {
+  const categoryName = categories.find(c => c.id === p.category)?.name ?? p.category;
+  return {
+    strong: normalizeTerm(`${p.name} ${p.sku} ${categoryName} ${p.subcategory.replace(/-/g, ' ')}`),
+    weak: normalizeTerm(p.description),
+    vehicle: normalizeTerm(p.compatibleVehicles.map(v => `${v.brand} ${v.model}`).join(' ')),
+  };
+}
+
+// HU-E04-01: la consulta se interpreta por palabras, no como una cadena completa.
+// - Cada palabra del repuesto ("filtro", "pastillas", "aire") debe aparecer en nombre, referencia, categoría o descripción.
+// - Las palabras que nombran un vehículo ("Tivoli", "Korando") y los años PRIORIZAN, no excluyen:
+//   los repuestos de ese modelo van primero (Modelo conceptual §1). Si la consulta es solo un vehículo, se listan sus repuestos.
+export function searchProductsFull(query: string): Product[] {
+  const tokens = tokenizeQuery(query);
+  if (tokens.length === 0) return [];
+
+  const vehicleTerms = getVehicleTerms();
+  const yearTokens = tokens.filter(t => YEAR_TOKEN.test(t)).map(Number);
+  const vehicleTokens = tokens.filter(t => vehicleTerms.has(t));
+  const partTokens = tokens.filter(t => !vehicleTerms.has(t) && !YEAR_TOKEN.test(t));
+
+  const scored: { product: Product; score: number }[] = [];
+
+  for (const p of products) {
+    const fields = getSearchFields(p);
+    let score = 0;
+    let matchesAllParts = true;
+
+    for (const token of partTokens) {
+      if (includesToken(fields.strong, token)) score += 3;
+      else if (includesToken(fields.weak, token)) score += 1;
+      else {
+        matchesAllParts = false;
+        break;
+      }
+    }
+    if (!matchesAllParts) continue;
+
+    const vehicleHits = vehicleTokens.filter(t => includesToken(fields.vehicle, t)).length;
+
+    if (partTokens.length === 0) {
+      // Solo vehículo: todos los términos de vehículo deben coincidir
+      if (vehicleTokens.length === 0 || vehicleHits < vehicleTokens.length) continue;
+    }
+
+    score += vehicleHits * 2;
+    if (yearTokens.some(year => p.compatibleVehicles.some(v => yearInRange(v.years, year)))) score += 1;
+
+    scored.push({ product: p, score });
+  }
+
+  return scored
+    .map((entry, index) => ({ ...entry, index }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(entry => entry.product);
 }
 
 function normalizeTerm(value: string): string {
@@ -457,8 +616,9 @@ export function searchProductsSmart(query: string): SmartSearchResult {
 
   const correctedWords = words.map(word => {
     const normalized = normalizeTerm(word);
-    if (normalized.length < 3) return word;
+    if (normalized.length < 3 || STOPWORDS.has(normalized) || YEAR_TOKEN.test(normalized)) return word;
     if (vocabulary.some(term => term.includes(normalized) || normalized.includes(term))) return word;
+    if (products.some(p => includesToken(getSearchFields(p).strong, normalized))) return word;
 
     let bestTerm: string | null = null;
     let bestDistance = Infinity;
@@ -498,17 +658,21 @@ export function getSearchSuggestions(query: string, limit = 6): SearchSuggestion
   const q = normalizeTerm(query);
   if (q.length < 2) return [];
 
+  // Varias palabras en cualquier orden: "aire filtro" también sugiere "Filtro de aire motor"
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const matchesAll = (text: string) => tokens.every(t => text.includes(t));
+
   const suggestions: SearchSuggestion[] = [];
 
   for (const category of categories) {
-    if (normalizeTerm(category.name).includes(q)) {
+    if (matchesAll(normalizeTerm(category.name))) {
       suggestions.push({ label: category.name, type: 'category', href: `/repuestos?categoria=${category.id}` });
     }
   }
 
   for (const product of products) {
     if (suggestions.length >= limit) break;
-    if (normalizeTerm(product.name).includes(q) || normalizeTerm(product.sku).includes(q)) {
+    if (matchesAll(normalizeTerm(`${product.name} ${product.sku}`))) {
       suggestions.push({ label: product.name, type: 'product', href: `/repuestos/${product.id}` });
     }
   }
@@ -516,27 +680,113 @@ export function getSearchSuggestions(query: string, limit = 6): SearchSuggestion
   return suggestions.slice(0, limit);
 }
 
-export function isProductCompatible(product: Product, vehicle: { brand: string; model: string; year: number }): boolean {
-  return product.compatibleVehicles.some(v =>
+export interface VehicleLike {
+  brand: string;
+  model: string;
+  year: number;
+  engine?: string;
+}
+
+// Modelo conceptual §2–3: aplicabilidad (atributo del repuesto) vs compatibilidad (evaluación contra el vehículo activo).
+// - compatible: hay dato y coincide en marca, modelo, año y (si el dato lo exige) motor.
+// - not_compatible: hay dato y no coincide (modelo ausente, año fuera de rango o motor distinto).
+// - unknown ("sin datos"): no hay aplicabilidad cargada, o depende de un motor que el usuario no confirmó.
+export type CompatibilityStatus = 'compatible' | 'not_compatible' | 'unknown';
+
+export type CompatibilityReason =
+  | 'match'
+  | 'no_data'
+  | 'model_not_listed'
+  | 'year_out_of_range'
+  | 'engine_mismatch'
+  | 'engine_unconfirmed';
+
+export interface CompatibilityDetail {
+  status: CompatibilityStatus;
+  reason: CompatibilityReason;
+  /** Rangos de años declarados para el modelo, cuando el motivo es "año fuera de rango". */
+  applicableYears?: string;
+}
+
+function yearInRange(years: string, year: number): boolean {
+  const range = years.match(/(\d{4})\s*-\s*(\d{4})/);
+  if (!range) return true; // rango ilegible: no se usa para descartar
+  return year >= parseInt(range[1]) && year <= parseInt(range[2]);
+}
+
+export function getCompatibilityDetail(product: Product, vehicle: VehicleLike): CompatibilityDetail {
+  if (product.compatibleVehicles.length === 0) {
+    return { status: 'unknown', reason: 'no_data' };
+  }
+
+  const sameModel = product.compatibleVehicles.filter(v =>
     v.brand.toLowerCase() === vehicle.brand.toLowerCase() &&
     v.model.toLowerCase() === vehicle.model.toLowerCase()
   );
+  if (sameModel.length === 0) {
+    return { status: 'not_compatible', reason: 'model_not_listed' };
+  }
+
+  const sameYear = sameModel.filter(v => yearInRange(v.years, vehicle.year));
+  if (sameYear.length === 0) {
+    return { status: 'not_compatible', reason: 'year_out_of_range', applicableYears: sameModel.map(v => v.years).join(', ') };
+  }
+
+  // Sin restricción de motor en el dato → coincide
+  if (sameYear.some(v => !v.engine)) {
+    return { status: 'compatible', reason: 'match' };
+  }
+
+  if (!vehicle.engine) {
+    return { status: 'unknown', reason: 'engine_unconfirmed' };
+  }
+
+  const engineMatches = sameYear.some(v => v.engine!.toLowerCase() === vehicle.engine!.toLowerCase());
+  return engineMatches
+    ? { status: 'compatible', reason: 'match' }
+    : { status: 'not_compatible', reason: 'engine_mismatch' };
 }
 
-export function getCompatibleProducts(vehicle: { brand: string; model: string; year: number }): Product[] {
+export function getCompatibilityStatus(product: Product, vehicle: VehicleLike): CompatibilityStatus {
+  return getCompatibilityDetail(product, vehicle).status;
+}
+
+// Compatibilidad confirmada (estricta): la usan el filtro "solo compatibles" y los conteos.
+export function isProductCompatible(product: Product, vehicle: VehicleLike): boolean {
+  return getCompatibilityStatus(product, vehicle) === 'compatible';
+}
+
+export function getCompatibleProducts(vehicle: VehicleLike): Product[] {
   return products.filter(p => isProductCompatible(p, vehicle));
 }
 
-// HU-E07-02: estado de compatibilidad de 3 valores. "unknown" ocurre cuando el vehículo no
-// aparece en la lista de compatibles Y el producto tiene datos de SIISA marcados como incompletos
-// (compatibilityVerified === false) — nunca debe presentarse como "no compatible".
-export type CompatibilityStatus = 'compatible' | 'not_compatible' | 'unknown';
+// Modelo conceptual §1: con vehículo activo, los compatibles tienen prioridad en el orden (no exclusividad).
+// Orden estable: compatibles, luego sin datos, luego no compatibles.
+export function sortByCompatibility<T extends Product>(list: T[], vehicle: VehicleLike | null): T[] {
+  if (!vehicle) return list;
+  const rank: Record<CompatibilityStatus, number> = { compatible: 0, unknown: 1, not_compatible: 2 };
+  return list
+    .map((product, index) => ({ product, index, rank: rank[getCompatibilityStatus(product, vehicle)] }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(entry => entry.product);
+}
 
-export function getCompatibilityStatus(
-  product: Product,
-  vehicle: { brand: string; model: string; year: number }
-): CompatibilityStatus {
-  if (isProductCompatible(product, vehicle)) return 'compatible';
-  if (product.compatibilityVerified === false) return 'unknown';
-  return 'not_compatible';
+// HU-E55-01/03: relaciones de un producto resueltas contra el catálogo actual y el vehículo activo.
+export interface ResolvedRelation {
+  relation: ProductRelation;
+  product: Product;
+  compatibility: CompatibilityStatus | null;
+}
+
+export function getProductRelations(product: Product, vehicle: VehicleLike | null) {
+  const declared = product.relations ?? [];
+  const resolved: ResolvedRelation[] = [];
+  declared.forEach((relation) => {
+    const related = getProductById(relation.productId);
+    if (!related || related.discontinued) return; // referencia que ya no se vende: no se ofrece
+    const compatibility = vehicle ? getCompatibilityStatus(related, vehicle) : null;
+    if (compatibility === 'not_compatible') return; // HU-E55-01: con vehículo activo, solo lo que puede servir
+    resolved.push({ relation, product: related, compatibility });
+  });
+  return { hasData: declared.length > 0, resolved, hiddenCount: declared.length - resolved.length };
 }

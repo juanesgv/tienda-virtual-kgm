@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { products, categories, formatPrice, isProductCompatible } from "../data/products";
+import { products, categories, formatPrice, isProductCompatible, sortByCompatibility } from "../data/products";
 import ProductCard from "../components/ProductCard";
 import VehicleModal from "../components/VehicleModal";
 import ServiceUnavailable from "../components/ServiceUnavailable";
@@ -19,11 +19,18 @@ export default function RepuestosPage() {
   const router = useRouter();
   const categoriaParam = searchParams.get("categoria");
   const subcategoriaParam = searchParams.get("subcategoria");
-  const { vehicle, isVehicleSaved } = useVehicle();
+  const { vehicle, isVehicleSaved, compatibleOnly, setCompatibleOnly } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // HU-E07-01: el filtro persiste entre pantallas; solo tiene efecto si hay vehículo activo
+  const showOnlyCompatible = compatibleOnly && isVehicleSaved;
+  const setShowOnlyCompatible = setCompatibleOnly;
   // HU-E10-05: enlaces como "Ver solo compatibles" (Home, carrito vacío) llegan con ?compatible=true
-  const [showOnlyCompatible, setShowOnlyCompatible] = useState(() => searchParams.get("compatible") === "true");
+  const compatibleParam = searchParams.get("compatible") === "true";
+  useEffect(() => {
+    if (compatibleParam) setCompatibleOnly(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compatibleParam]);
   const [priceRange, setPriceRange] = useState({ min: PRICE_MIN, max: PRICE_MAX });
   const [sortBy, setSortBy] = useState("relevancia");
   const [page, setPage] = useState(1);
@@ -74,10 +81,13 @@ export default function RepuestosPage() {
       case "nombre":
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
+      default:
+        // Relevancia: con vehículo activo, los compatibles van primero (Modelo conceptual §1)
+        result = sortByCompatibility(result, isVehicleSaved ? vehicle : null);
     }
 
     return result;
-  }, [preVehicleFilterProducts, showOnlyCompatible, vehicle, sortBy]);
+  }, [preVehicleFilterProducts, showOnlyCompatible, vehicle, isVehicleSaved, sortBy]);
 
   // HU-E05-04 / HU-E03-03: los filtros de precio/subcategoría sí dejaron resultados,
   // pero el filtro de compatibilidad de vehículo los ocultó todos
@@ -416,18 +426,6 @@ export default function RepuestosPage() {
         <div className="products-container">
           {/* Barra de ordenamiento */}
           <div className="sort-bar">
-            <div className="view-toggle">
-              <button className="view-btn active" title="Vista grid">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                  <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm-6 0h4v-4h-4v4z" />
-                </svg>
-              </button>
-              <button className="view-btn" title="Vista lista">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                  <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
-                </svg>
-              </button>
-            </div>
             <div className="sort-select">
               <label>Ordenar por:</label>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>

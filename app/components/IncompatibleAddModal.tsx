@@ -1,5 +1,7 @@
 "use client";
 
+import { useDialog } from "../lib/useDialog";
+
 interface IncompatibleAddModalProps {
   productName: string;
   vehicleLabel: string;
@@ -15,8 +17,10 @@ export default function IncompatibleAddModal({
   onConfirm,
   onCancel,
 }: IncompatibleAddModalProps) {
+  const dialogRef = useDialog<HTMLDivElement>(onCancel);
+
   return (
-    <div className="vehicle-modal active">
+    <div className="vehicle-modal active" role="alertdialog" aria-modal="true" aria-labelledby="incompatible-title" ref={dialogRef}>
       <div className="modal-overlay" onClick={onCancel}></div>
       <div className="modal-content incompatible-confirm-content">
         <div className="incompatible-confirm-icon">
@@ -24,7 +28,7 @@ export default function IncompatibleAddModal({
             <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
           </svg>
         </div>
-        <h2>Este repuesto no es compatible con tu vehículo</h2>
+        <h2 id="incompatible-title">Este repuesto no es compatible con tu vehículo</h2>
         <p>
           <strong>{productName}</strong> no está confirmado como compatible con tu <strong>{vehicleLabel}</strong>.
           Si lo agregas de todas formas, quedará señalado en tu carrito.

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useVehicle, Vehicle } from "../context/VehicleContext";
+import { useDialog } from "../lib/useDialog";
 
 interface VehicleModalProps {
   isOpen: boolean;
@@ -22,11 +23,11 @@ const ENGINES = ["1.6L Gasolina", "1.6L Diésel", "2.2L Diésel", "No estoy segu
 // Una placa/VIN con un formato claramente inválido simula "no encontrado" para poder mostrar el fallback a manual.
 function simulatePlateLookup(plate: string): Vehicle | null {
   if (plate.trim().length < 6) return null;
-  return { plate: plate.trim(), brand: "KGM", model: "Tivoli", year: 2023 };
+  return { plate: plate.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }
 function simulateVinLookup(vin: string): Vehicle | null {
   if (vin.trim().length < 17) return null;
-  return { vin: vin.trim(), brand: "KGM", model: "Tivoli", year: 2023 };
+  return { vin: vin.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }
 
 export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
@@ -42,6 +43,8 @@ export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
   // HU-E08-01: paso de confirmación antes de guardar lo que devolvió la búsqueda por placa/VIN
   const [pendingVehicle, setPendingVehicle] = useState<Vehicle | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
+
+  const dialogRef = useDialog<HTMLDivElement>(onClose, isOpen);
 
   const availableModels = useMemo(() => (brand ? VEHICLE_CATALOG[brand] ?? [] : []), [brand]);
 
@@ -114,10 +117,10 @@ export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="vehicle-modal active">
+    <div className="vehicle-modal active" role="dialog" aria-modal="true" aria-label="Selecciona tu vehículo" ref={dialogRef}>
       <div className="modal-overlay" onClick={onClose}></div>
       <div className="modal-content">
-        <button className="modal-close" onClick={onClose}>
+        <button className="modal-close" onClick={onClose} aria-label="Cerrar">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
           </svg>

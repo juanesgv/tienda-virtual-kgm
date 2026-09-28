@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
-import { formatPrice as formatProductPrice, getCompatibilityStatus } from "../data/products";
+import { formatPrice as formatProductPrice } from "../data/products";
+import { getLineCompatibility } from "../lib/cartLine";
+import ShippingProgress from "./ShippingProgress";
+import { useDialog } from "../lib/useDialog";
 import { useVehicle } from "../context/VehicleContext";
 
 interface CartDrawerProps {
@@ -19,12 +22,20 @@ const COMPAT_LABEL: Record<string, string> = {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeFromCart, updateQuantity, getSubtotal, getShippingCost, getTotal, clearCart } = useCart();
   const { vehicle, isVehicleSaved } = useVehicle();
+  const drawerRef = useDialog<HTMLDivElement>(onClose, isOpen);
 
   if (!isOpen) return null;
 
   return (
     <div className="cart-drawer-overlay" onClick={onClose}>
-      <div className="cart-drawer" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="cart-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tu carrito"
+        ref={drawerRef}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="cart-drawer-header">
           <h2>
@@ -33,7 +44,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </svg>
             Tu carrito
           </h2>
-          <button className="cart-drawer-close" onClick={onClose}>
+          <button className="cart-drawer-close" onClick={onClose} aria-label="Cerrar carrito">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
@@ -78,16 +89,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       </Link>
                       <p className="cart-item-sku">Ref: {item.product.sku}</p>
                       {/* HU-E10-03/E10-04: estado de compatibilidad visible y persistente en el carrito */}
-                      {isVehicleSaved && vehicle && (
-                        <span className={`cart-item-compat ${getCompatibilityStatus(item.product, vehicle)}`}>
-                          {COMPAT_LABEL[getCompatibilityStatus(item.product, vehicle)]}
-                        </span>
-                      )}
+                      {(() => {
+                        const line = getLineCompatibility(item, isVehicleSaved ? vehicle : null);
+                        return line ? (
+                          <span className={`cart-item-compat ${line.status}`}>
+                            {COMPAT_LABEL[line.status]} · {line.vehicle.brand} {line.vehicle.model} {line.vehicle.year}
+                          </span>
+                        ) : null;
+                      })()}
                       <p className="cart-item-unit-price">{formatProductPrice(item.product.price)} c/u</p>
                       <div className="cart-item-actions">
                         <div className="quantity-selector small">
                           <button
                             className="qty-btn"
+                            aria-label={`Disminuir cantidad de ${item.product.name}`}
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
                           >
@@ -96,6 +111,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <span className="qty-value">{item.quantity}</span>
                           <button
                             className="qty-btn"
+                            aria-label={`Aumentar cantidad de ${item.product.name}`}
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                           >
                             +
@@ -110,6 +126,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       className="cart-item-remove"
                       onClick={() => removeFromCart(item.product.id)}
                       title="Eliminar"
+                      aria-label={`Eliminar ${item.product.name} del carrito`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                         <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -142,15 +159,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   {getShippingCost() === 0 ? (
                     <span className="free-shipping">Gratis</span>
                   ) : (
-                    formatProductPrice(getShippingCost())
+                    `${formatProductPrice(getShippingCost())} (tarifa plana)`
                   )}
                 </span>
               </div>
-              {getShippingCost() > 0 && (
-                <p className="shipping-note">
-                  Envío gratis en compras mayores a {formatProductPrice(500000)}
-                </p>
-              )}
+              <ShippingProgress subtotal={getSubtotal()} />
               <div className="summary-row total">
                 <span>Total</span>
                 <span>{formatProductPrice(getTotal())}</span>

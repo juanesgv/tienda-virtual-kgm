@@ -31,6 +31,9 @@ interface VehicleContextType {
   activateVehicle: (id: string) => void;
   /** HU-E08-03: elimina un vehículo del garaje. */
   removeVehicle: (id: string) => void;
+  /** HU-E07-01: el filtro "solo compatibles" persiste entre catálogo, búsqueda y categorías. Quitarlo no borra el vehículo. */
+  compatibleOnly: boolean;
+  setCompatibleOnly: (value: boolean) => void;
 }
 
 const VehicleContext = createContext<VehicleContextType | undefined>(undefined);
@@ -38,6 +41,7 @@ const VehicleContext = createContext<VehicleContextType | undefined>(undefined);
 const GARAGE_KEY = 'kgm-garage';
 const ACTIVE_ID_KEY = 'kgm-active-vehicle-id';
 const LEGACY_VEHICLE_KEY = 'kgm-vehicle';
+const COMPATIBLE_ONLY_KEY = 'kgm-compatible-only';
 
 function sameVehicle(a: Vehicle, b: Vehicle): boolean {
   if (a.plate && b.plate) return a.plate.toUpperCase() === b.plate.toUpperCase();
@@ -52,10 +56,17 @@ function sameVehicle(a: Vehicle, b: Vehicle): boolean {
 export function VehicleProvider({ children }: { children: ReactNode }) {
   const [vehicles, setVehicles] = useState<SavedVehicle[]>([]);
   const [activeVehicleId, setActiveVehicleId] = useState<string | null>(null);
+  const [compatibleOnly, setCompatibleOnlyState] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const setCompatibleOnly = (value: boolean) => {
+    setCompatibleOnlyState(value);
+    localStorage.setItem(COMPATIBLE_ONLY_KEY, String(value));
+  };
 
   // Cargar garaje desde localStorage al iniciar (con migración desde el formato anterior de un solo vehículo)
   useEffect(() => {
+    setCompatibleOnlyState(localStorage.getItem(COMPATIBLE_ONLY_KEY) === 'true');
     try {
       const savedGarage = localStorage.getItem(GARAGE_KEY);
       const savedActiveId = localStorage.getItem(ACTIVE_ID_KEY);
@@ -113,6 +124,7 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
 
   const clearVehicle = () => {
     persist(vehicles, null);
+    setCompatibleOnly(false);
   };
 
   const activateVehicle = (id: string) => {
@@ -143,6 +155,8 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
         clearVehicle,
         activateVehicle,
         removeVehicle,
+        compatibleOnly,
+        setCompatibleOnly,
       }}
     >
       {children}

@@ -3,22 +3,25 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { categories, searchProductsSmart, searchProductsFull, isProductCompatible } from "../data/products";
+import { categories, searchProductsSmart, searchProductsFull, isProductCompatible, sortByCompatibility } from "../data/products";
 import ProductCard from "../components/ProductCard";
 import VehicleModal from "../components/VehicleModal";
 import ServiceUnavailable from "../components/ServiceUnavailable";
 import { useVehicle } from "../context/VehicleContext";
 import { useServiceStatus } from "../context/ServiceStatusContext";
+import { useAdvisor } from "../context/AdvisorContext";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  const { vehicle, isVehicleSaved } = useVehicle();
+  const { vehicle, isVehicleSaved, compatibleOnly, setCompatibleOnly } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
+  const { openAdvisor } = useAdvisor();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showOnlyCompatible, setShowOnlyCompatible] = useState(false);
+  // HU-E07-01: el filtro persiste entre pantallas; solo tiene efecto si hay vehículo activo
+  const showOnlyCompatible = compatibleOnly && isVehicleSaved;
+  const setShowOnlyCompatible = setCompatibleOnly;
   const [sortBy, setSortBy] = useState("relevancia");
-  const [showAdvisorPreview, setShowAdvisorPreview] = useState(false);
   const [forceOriginalTerm, setForceOriginalTerm] = useState(false);
 
   // HU-E04-01/02/04: búsqueda general con tolerancia a errores tipográficos.
@@ -47,10 +50,13 @@ export default function SearchPage() {
       case "nombre":
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
+      default:
+        // Relevancia: con vehículo activo, los compatibles van primero (Modelo conceptual §1)
+        result = sortByCompatibility(result, isVehicleSaved ? vehicle : null);
     }
 
     return result;
-  }, [searchResults, showOnlyCompatible, vehicle, sortBy]);
+  }, [searchResults, showOnlyCompatible, vehicle, isVehicleSaved, sortBy]);
 
   // Contar productos compatibles
   const compatibleCount = useMemo(() => {
@@ -66,7 +72,6 @@ export default function SearchPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setForceOriginalTerm(false);
-    setShowAdvisorPreview(false);
   }, [query]);
 
   // HU-E40: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página)
@@ -258,24 +263,16 @@ export default function SearchPage() {
                 Ver todos los repuestos
               </Link>
 
-              {/* HU-E04-05: contactar a un asesor como último recurso.
-                  El canal real (E21/E22/E54) aún no está definido en Notion, así que esto
-                  es una vista previa simulada, no una integración funcional. */}
+              {/* HU-E04-05 / E54: contactar a un asesor como último recurso, con búsqueda y vehículo como contexto.
+                  El canal real sigue por definir: el flujo es una simulación. */}
               <div className="advisor-fallback">
-                {!showAdvisorPreview ? (
-                  <button type="button" className="link-button" onClick={() => setShowAdvisorPreview(true)}>
-                    ¿Sigues sin encontrarlo? Habla con un asesor
-                  </button>
-                ) : (
-                  <div className="advisor-preview-card">
-                    <span className="simulated-badge">Vista previa simulada · Bloque 7</span>
-                    <p>
-                      En la versión conectada, aquí se abriría un canal de asesoría enviando ya tu búsqueda
-                      "<strong>{query}</strong>"{isVehicleSaved && vehicle ? <> y tu vehículo <strong>{vehicle.brand} {vehicle.model} {vehicle.year}</strong></> : null} como
-                      contexto, para que el asesor no tenga que preguntarlo de nuevo.
-                    </p>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => openAdvisor({ origin: "empty_search", searchQuery: query })}
+                >
+                  ¿Sigues sin encontrarlo? Habla con un asesor
+                </button>
               </div>
             </div>
           )}

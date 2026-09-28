@@ -3,20 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getProductById, formatPrice, getCompatibilityStatus } from "../../data/products";
+import { getProductById, formatPrice, getCompatibilityStatus, getCompatibilityDetail } from "../../data/products";
 import { useVehicle } from "../../context/VehicleContext";
 import { useCart } from "../../context/CartContext";
 import { useUser } from "../../context/UserContext";
 import VehicleModal from "../../components/VehicleModal";
 import ProductCard from "../../components/ProductCard";
 import IncompatibleAddModal from "../../components/IncompatibleAddModal";
+import ProductComplements from "../../components/ProductComplements";
 import ServiceUnavailable from "../../components/ServiceUnavailable";
 import { products } from "../../data/products";
 import { useServiceStatus } from "../../context/ServiceStatusContext";
+import { useAdvisor } from "../../context/AdvisorContext";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { vehicle, isVehicleSaved } = useVehicle();
+  const { openAdvisor } = useAdvisor();
   const { addToCart } = useCart();
   const { isAuthenticated } = useUser();
   const { isInventoryDown } = useServiceStatus();
@@ -24,7 +27,6 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("descripcion");
   const [quantity, setQuantity] = useState(1);
   const [mainImageError, setMainImageError] = useState(false);
-  const [showAdvisorPreview, setShowAdvisorPreview] = useState(false);
   const [notifyRequested, setNotifyRequested] = useState(false);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
   const [showIncompatibleConfirm, setShowIncompatibleConfirm] = useState(false);
@@ -89,9 +91,27 @@ export default function ProductDetailPage() {
   }
 
   // HU-E07-02: 3 estados — compatible / no compatible / sin confirmar (nunca se trata como rechazo)
-  const compatibilityStatus = vehicle ? getCompatibilityStatus(product, vehicle) : null;
+  // El motivo viene del dato (año, motor, aplicabilidad), no de una etiqueta: así el cliente ve por qué.
+  const compatibilityDetail = vehicle ? getCompatibilityDetail(product, vehicle) : null;
+  const compatibilityStatus = compatibilityDetail?.status ?? null;
   const isCompatible = compatibilityStatus === "compatible";
   const isUnknownCompatibility = compatibilityStatus === "unknown";
+  const reasonText = (() => {
+    switch (compatibilityDetail?.reason) {
+      case "no_data":
+        return "Todavía no hay información de aplicabilidad cargada para este repuesto.";
+      case "engine_unconfirmed":
+        return "Aplica a tu modelo y año, pero depende del motor y no has indicado el tuyo.";
+      case "year_out_of_range":
+        return `Este repuesto aplica a ${compatibilityDetail.applicableYears}; tu vehículo es ${vehicle?.year}.`;
+      case "engine_mismatch":
+        return "Aplica a tu modelo y año, pero con otro motor.";
+      case "model_not_listed":
+        return "Tu modelo no está entre los vehículos a los que aplica.";
+      default:
+        return null;
+    }
+  })();
 
   // HU-E07-04: si este repuesto no sirve para el vehículo, ofrecer alternativas que sí sirvan
   const compatibleAlternatives =
@@ -150,35 +170,6 @@ export default function ProductDetailPage() {
               )}
             </div>
           </div>
-          <div className="thumbnail-list">
-            <button className="thumb active">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 1`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
-                </svg>
-              )}
-            </button>
-            <button className="thumb">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 2`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              )}
-            </button>
-            <button className="thumb">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 3`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              )}
-            </button>
-          </div>
         </div>
 
         {/* Info del Producto */}
@@ -212,11 +203,11 @@ export default function ProductDetailPage() {
                   {isUnknownCompatibility && (
                     <>
                       No tenemos confirmado si este repuesto sirve para tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
-                      No significa que no sea compatible — significa que aún debe verificarse.
+                      No significa que no sea compatible — significa que aún debe verificarse. {reasonText}
                     </>
                   )}
                   {!isCompatible && !isUnknownCompatibility && (
-                    <>Este repuesto no es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.</>
+                    <>Este repuesto no es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>. {reasonText}</>
                   )}
                 </span>
               </div>
@@ -394,26 +385,35 @@ export default function ProductDetailPage() {
                   <>
                     Nuestros datos para el <strong>{product.name} ({product.sku})</strong> todavía no confirman ni
                     descartan que sirva para tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
-                    Te recomendamos confirmarlo con un asesor antes de instalarlo.
+                    {reasonText} Te recomendamos confirmarlo con un asesor antes de instalarlo.
                   </>
                 )}
                 {isVehicleSaved && !isCompatible && !isUnknownCompatibility && (
                   <>
                     Hemos verificado que el <strong>{product.name} ({product.sku})</strong> no es compatible con tu{" "}
-                    <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
+                    <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>. {reasonText}
                   </>
                 )}
               </p>
+              {isVehicleSaved && !isCompatible && (
+                <button
+                  type="button"
+                  className="link-button advisor-cta"
+                  onClick={() => openAdvisor({ origin: "product_compat", product: { id: product.id, name: product.name, sku: product.sku } })}
+                >
+                  Confirmar compatibilidad con un asesor
+                </button>
+              )}
             </div>
           </div>
 
           {/* Lista de vehículos compatibles */}
           <div className="compatible-vehicles">
             <h3>Vehículos compatibles con este repuesto</h3>
-            {product.compatibilityVerified === false && (
+            {product.compatibleVehicles.length === 0 && (
               <p className="compatibility-data-note">
-                Esta lista puede estar incompleta: todavía no se ha confirmado para todos los modelos.
-                Si tu vehículo no aparece, no asumas que no sirve — confírmalo con un asesor.
+                Todavía no hay información de aplicabilidad cargada para este repuesto. Revisa la descripción o
+                confírmalo con un asesor antes de comprarlo.
               </p>
             )}
             <div className="vehicles-grid">
@@ -518,9 +518,9 @@ export default function ProductDetailPage() {
           <div className="tab-panel active">
             <div className="full-compatibility">
               <h4>Lista completa de vehículos compatibles</h4>
-              {product.compatibilityVerified === false && (
+              {product.compatibleVehicles.length === 0 && (
                 <p className="compatibility-data-note">
-                  Esta lista puede estar incompleta: todavía no se ha confirmado para todos los modelos.
+                  Todavía no hay información de aplicabilidad cargada para este repuesto.
                 </p>
               )}
               <div className="compatibility-table-wrapper">
@@ -580,32 +580,30 @@ export default function ProductDetailPage() {
               {vehicle?.brand} {vehicle?.model} en este momento.
             </p>
           </div>
-          {!showAdvisorPreview ? (
-            <button type="button" className="link-button" onClick={() => setShowAdvisorPreview(true)}>
-              Habla con un asesor sobre este repuesto
-            </button>
-          ) : (
-            <div className="advisor-preview-card">
-              <span className="simulated-badge">Vista previa simulada · Bloque 7</span>
-              <p>
-                En la versión conectada, aquí se abriría un canal de asesoría enviando ya el repuesto{" "}
-                <strong>{product.name} ({product.sku})</strong> y tu vehículo{" "}
-                <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong> como contexto.
-              </p>
-            </div>
-          )}
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => openAdvisor({ origin: "product_no_alternatives", product: { id: product.id, name: product.name, sku: product.sku } })}
+          >
+            Habla con un asesor sobre este repuesto
+          </button>
         </section>
+      )}
+
+      {/* E55: complementos para instalar (corrección, no venta cruzada). Distinto de "otros repuestos" (E28). */}
+      {!product.discontinued && (
+        <ProductComplements key={`${product.id}-${vehicle ? `${vehicle.brand}${vehicle.model}${vehicle.year}${vehicle.engine ?? ""}` : "sin-vehiculo"}`} product={product} />
       )}
 
       {/* Productos Relacionados / Alternativas compatibles */}
       {displayedRelatedProducts.length > 0 && (
         <section className="related-products">
           <div className="section-header">
-            <h2>{showingAlternatives ? "Alternativas compatibles con tu vehículo" : "Repuestos relacionados"}</h2>
+            <h2>{showingAlternatives ? "Alternativas compatibles con tu vehículo" : "Otros repuestos de esta categoría"}</h2>
             <p>
               {showingAlternatives
                 ? `Estas sí están confirmadas para tu ${vehicle?.brand} ${vehicle?.model}`
-                : "Otros productos que podrían interesarte"}
+                : "Para comparar opciones; no son complementos de instalación"}
             </p>
           </div>
 
