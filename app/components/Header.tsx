@@ -80,8 +80,14 @@ export function Header() {
                   } else if (suggestions.length > 0 && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
                     e.preventDefault();
                     setShowSuggestions(true);
-                    const step = e.key === "ArrowDown" ? 1 : -1;
-                    setActiveSuggestion((current) => (current + step + suggestions.length) % suggestions.length);
+                    const count = suggestions.length;
+                    setActiveSuggestion((current) =>
+                      e.key === "ArrowDown"
+                        ? (current + 1) % count
+                        : current < 0
+                        ? count - 1 // desde "nada resaltado", flecha arriba va a la última
+                        : (current - 1 + count) % count
+                    );
                   }
                 }}
                 role="combobox"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { getProductById, Product } from "../data/products";
 import { getShipping } from "../data/shipping";
 import { OrderItemSnapshot, OrderItemVehicle } from "../types/account";
@@ -65,6 +65,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Espejo síncrono de `items`: addToCart calcula el resultado (cantidad final, límite por stock) de inmediato,
+  // sin depender de cuándo React ejecute la función de actualización, y así varios adds seguidos son consistentes.
+  const itemsRef = useRef<CartItem[]>([]);
+  itemsRef.current = items;
 
   // Cargar carrito desde localStorage al iniciar
   useEffect(() => {
@@ -96,22 +100,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const limit = getStockLimit(product);
     if (limit === 0) return { success: false };
 
-    let limitedTo: number | undefined;
+    const currentItems = itemsRef.current;
+    const existingItem = currentItems.find((item) => item.product.id === product.id);
+    const desiredQty = (existingItem?.quantity ?? 0) + quantity;
+    const finalQty = limit !== null ? Math.min(desiredQty, limit) : desiredQty;
+    const limitedTo = limit !== null && finalQty < desiredQty ? finalQty : undefined;
 
-    setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.product.id === product.id);
-      const desiredQty = (existingItem?.quantity ?? 0) + quantity;
-      const finalQty = limit !== null ? Math.min(desiredQty, limit) : desiredQty;
-      if (limit !== null && finalQty < desiredQty) limitedTo = finalQty;
-
-      if (existingItem) {
-        return currentItems.map((item) =>
+    const next = existingItem
+      ? currentItems.map((item) =>
           item.product.id === product.id ? { ...item, quantity: finalQty, vehicle: vehicle ?? item.vehicle } : item
-        );
-      }
-
-      return [...currentItems, { product, quantity: finalQty, vehicle }];
-    });
+        )
+      : [...currentItems, { product, quantity: finalQty, vehicle }];
+    itemsRef.current = next;
+    setItems(next);
 
     return { success: true, limitedTo };
   };

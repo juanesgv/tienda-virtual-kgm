@@ -1,0 +1,347 @@
+<title>Flujos KGM Repuestos</title>
+<style>
+  /* Layout: columna única centrada, cada escenario es una tarjeta con su propio diagrama Mermaid con scroll horizontal */
+  :root {
+    --bg: #f7f6fb;
+    --surface: #ffffff;
+    --fg: #201c2c;
+    --fg-muted: #5b5676;
+    --accent: #3f3953;
+    --accent-soft: #eeecf6;
+    --border: #e3e0ee;
+    --functional: #2bbf7b;
+    --simulated: #b5701f;
+    --simulated-bg: #fdf3e4;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16141f;
+      --surface: #201c2c;
+      --fg: #ede9f7;
+      --fg-muted: #b3adcf;
+      --accent: #b7abe6;
+      --accent-soft: #2b2740;
+      --border: #362f4a;
+      --functional: #4fd99a;
+      --simulated: #f2ad57;
+      --simulated-bg: #332616;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16141f;
+    --surface: #201c2c;
+    --fg: #ede9f7;
+    --fg-muted: #b3adcf;
+    --accent: #b7abe6;
+    --accent-soft: #2b2740;
+    --border: #362f4a;
+    --functional: #4fd99a;
+    --simulated: #f2ad57;
+    --simulated-bg: #332616;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    margin: 0;
+    padding: 32px 16px 64px;
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+    line-height: 1.5;
+  }
+  .page { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 600;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  h2 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 21px;
+    font-weight: 600;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin: 0 0 10px;
+  }
+  p { margin: 0; }
+  .lede { color: var(--fg-muted); font-size: 15px; max-width: 62ch; }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    font-size: 13px;
+    color: var(--fg-muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 22px; height: 14px; border-radius: 4px; border: 1.5px solid var(--functional); flex: none; }
+  .swatch.simulated { border: 1.5px dashed var(--simulated); background: var(--simulated-bg); }
+
+  .scenario {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .scenario-head { display: flex; flex-direction: column; gap: 8px; }
+
+  .diagram-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    padding: 12px 4px;
+  }
+  pre.mermaid { margin: 0; min-width: 560px; }
+
+  .notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--fg-muted);
+  }
+  .notes strong { color: var(--fg); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+    font-size: 12.5px;
+    color: var(--fg-muted);
+  }
+
+  @media (max-width: 600px) {
+    .scenario { padding: 18px; border-radius: 12px; }
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="page">
+  <div>
+    <p class="eyebrow">KGM Repuestos · prototipo Next.js</p>
+    <h1>Flujos de usuario</h1>
+    <p class="lede">
+      Cuatro escenarios de validación, dibujados a partir de las épicas e historias de usuario de Notion y de cómo
+      se comportan hoy en el prototipo (rama <code>claude-notion</code>). Cada paso está etiquetado con su HU cuando
+      existe, y todo lo simulado —sin canal, pasarela o integración real— queda marcado como tal.
+    </p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch"></span> Funciona en el prototipo</div>
+    <div class="legend-item"><span class="swatch simulated"></span> Simulado — sin integración real</div>
+  </div>
+
+  <!-- Escenario 1 -->
+  <section class="scenario">
+    <div class="scenario-head">
+      <div class="meta-row">
+        <span class="chip">E02 · E04 · E05</span>
+      </div>
+      <h2>1. Búsqueda sin vehículo</h2>
+      <p class="lede">Un cliente entra sin haber guardado un vehículo y busca por nombre o referencia.</p>
+    </div>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
+    A["Cliente entra a la tienda<br/>sin vehículo guardado"] --> B["Escribe un término<br/>en el buscador"]
+    B --> C["Ve sugerencias en vivo<br/>mientras escribe (HU-E04-03)"]
+    C --> D{"¿La búsqueda<br/>encuentra algo?"}
+    D -- "Sí" --> E["Resultados en /buscar<br/>(HU-E04-01/02)"]
+    D -- "No, pero hay una<br/>corrección posible" --> F["'¿Quisiste decir…?'<br/>(tolera errores tipográficos)"]
+    F --> G{"¿Acepta la<br/>corrección?"}
+    G -- "Sí" --> E
+    G -- "No, buscar<br/>el término literal" --> H{"¿Ese término<br/>exacto trae algo?"}
+    D -- "No hay ninguna<br/>coincidencia" --> I["Estado vacío:<br/>categorías sugeridas"]
+    H -- "No" --> I
+    H -- "Sí" --> E
+    I --> J["'¿Sigues sin encontrarlo?<br/>Habla con un asesor'"]:::simulated
+    J --> K["Se abre el formulario<br/>de asesoría con la<br/>búsqueda como contexto"]:::simulated
+    E --> L["Abre la ficha<br/>de un producto"]
+    L --> M["Sin vehículo:<br/>'Guarda tu vehículo para<br/>verificar compatibilidad'"]
+    M --> N["Agrega al carrito<br/>sin aviso de compatibilidad"]
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Supuesto.</strong> La corrección tipográfica usa distancia de Levenshtein sobre el catálogo; el umbral de tolerancia no está definido en Notion.</p>
+      <p><strong>Simulado.</strong> El botón de asesoría abre un formulario que registra la solicitud en el navegador; no hay canal real (E21/E22/E54 sin historias completas).</p>
+    </div>
+  </section>
+
+  <!-- Escenario 2 -->
+  <section class="scenario">
+    <div class="scenario-head">
+      <div class="meta-row">
+        <span class="chip">E07 · E08 · E10</span>
+      </div>
+      <h2>2. Búsqueda con vehículo activo</h2>
+      <p class="lede">Con un vehículo guardado, la compatibilidad tiene tres estados: nunca solo dos.</p>
+    </div>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
+    A["Cliente guarda un vehículo<br/>(placa/VIN simulado o manual)<br/>HU-E08-01/02"] --> B["Vehículo activo:<br/>marca, modelo, año, motor"]
+    B --> C["Catálogo o búsqueda:<br/>compatibles primero,<br/>luego 'verificar',<br/>luego no compatibles"]
+    C --> D{"¿Filtro 'solo<br/>compatibles' activo?<br/>(persiste, HU-E07-01)"}
+    D -- "Sí" --> E["Solo se listan<br/>los compatibles"]
+    D -- "No" --> F["Se listan todos,<br/>priorizados"]
+    E --> G["Abre la ficha<br/>de un producto"]
+    F --> G
+    G --> H{"Estado de<br/>compatibilidad<br/>(HU-E07-02)"}
+    H -- "Compatible" --> I["Banner verde:<br/>'Es compatible'"]
+    I --> J["Agrega al carrito<br/>sin advertencia"]
+    H -- "Sin confirmar<br/>(sin datos o motor<br/>sin indicar)" --> K["Banner amarillo:<br/>'Aún no podemos confirmar,<br/>no significa que no sirva'"]
+    K --> L["Agrega al carrito<br/>sin advertencia"]
+    K --> M["'Confirmar compatibilidad<br/>con un asesor'"]:::simulated
+    H -- "No compatible" --> N["Banner rojo<br/>+ motivo (año, motor o modelo)"]
+    N --> O["Intenta agregar<br/>al carrito"]
+    O --> P["Modal de confirmación<br/>consciente (HU-E10-04)"]
+    P --> Q{"¿Confirma<br/>agregarlo igual?"}
+    Q -- "Sí" --> R["Se agrega,<br/>marcado como no compatible"]
+    Q -- "No" --> S["Cancela"]
+    N --> T{"¿Hay alternativas<br/>compatibles en la<br/>misma categoría?"}
+    T -- "Sí" --> U["Se muestran<br/>como alternativas"]
+    T -- "No" --> V["'Habla con un asesor<br/>sobre este repuesto'"]:::simulated
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Del Modelo conceptual (§3).</strong> "Sin confirmar" nunca se trata como rechazo: el repuesto puede servir, solo falta el dato.</p>
+      <p><strong>Hallazgo abierto.</strong> Agregar un producto en estado "sin confirmar" no muestra ninguna advertencia propia, solo la de "no compatible" la tiene.</p>
+    </div>
+  </section>
+
+  <!-- Escenario 3 -->
+  <section class="scenario">
+    <div class="scenario-head">
+      <div class="meta-row">
+        <span class="chip">E54 · simulado</span>
+      </div>
+      <h2>3. No sé qué repuesto necesito</h2>
+      <p class="lede">Siete puntos de entrada abren el mismo formulario de asesoría, con el contexto de cada uno.</p>
+    </div>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
+    A["Cliente no sabe qué<br/>repuesto necesita"] --> B{"¿Desde dónde<br/>pide ayuda?"}
+    B -- "Inicio" --> C1["origin: home"]
+    B -- "Pie de página" --> C2["origin: footer"]
+    B -- "Búsqueda sin<br/>resultados" --> C3["origin: empty_search"]
+    B -- "Catálogo caído" --> C4["origin: service_down"]
+    B -- "Duda de<br/>compatibilidad" --> C5["origin: product_compat"]
+    B -- "Sin alternativas<br/>compatibles" --> C6["origin: product_no_alternatives"]
+    B -- "Duda sobre<br/>complementos" --> C7["origin: product_complements"]
+    C1 --> D
+    C2 --> D
+    C3 --> D
+    C4 --> D
+    C5 --> D
+    C6 --> D
+    C7 --> D["Se abre el formulario y se<br/>guarda dónde estaba<br/>(HU-E54-04)"]:::simulated
+    D --> E["Elige qué contexto compartir:<br/>vehículo, búsqueda,<br/>producto, carrito"]:::simulated
+    E --> F["Describe su necesidad<br/>y elige un canal<br/>(WhatsApp / llamada / correo)"]:::simulated
+    F --> G["Ve el horario de<br/>atención (ejemplo)<br/>HU-E54-01"]:::simulated
+    G --> H["Envía la solicitud"]:::simulated
+    H --> I{"Se clasifica<br/>por origen"}:::simulated
+    I -- "No encontró algo<br/>o algo falló" --> J["fricción"]:::simulated
+    I -- "Necesita criterio<br/>experto" --> K["asesoría"]:::simulated
+    J --> L["Confirmación con número<br/>de solicitud (ASE-######)"]:::simulated
+    K --> L
+    L --> M["'Volver a lo que estaba<br/>haciendo': carrito y<br/>vehículo intactos"]
+    L --> N["Queda en el registro<br/>de demo /asesoria/registro"]:::simulated
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Del Modelo conceptual (§7).</strong> "Fricción" y "asesoría" son clasificaciones distintas: la primera mide algo que falló, la segunda una necesidad real de criterio experto.</p>
+      <p><strong>Simulado por completo.</strong> No hay canal, horario ni bandeja real: E21, E22 y E54 no tienen historias completas en Notion.</p>
+    </div>
+  </section>
+
+  <!-- Escenario 4 -->
+  <section class="scenario">
+    <div class="scenario-head">
+      <div class="meta-row">
+        <span class="chip">E10 · E11 · E17 · E18</span>
+      </div>
+      <h2>4. Intención de compra</h2>
+      <p class="lede">Del carrito a la confirmación del pedido, sin pasarela de pago real.</p>
+    </div>
+    <div class="diagram-wrap">
+<pre class="mermaid">
+flowchart TD
+    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
+    A["Producto agregado al carrito<br/>(guarda el vehículo con el<br/>que se agregó, HU-E17-03)"] --> B["Carrito: subtotal y<br/>'te faltan $X para envío<br/>gratis' (valores de ejemplo, D3)"]
+    B --> C["Compatibilidad por línea,<br/>según el vehículo de esa línea"]
+    C --> D["Proceder al pago"]
+    D --> E["Revalida contra el<br/>catálogo actual (HU-E11-05)"]
+    E --> F{"¿Cambió algo?<br/>(agotado, descontinuado,<br/>precio, cantidad)"}
+    F -- "Sí" --> G["'Algo cambió en<br/>tu carrito'"]
+    G --> H["Actualiza el pedido"]
+    H --> E
+    F -- "No" --> I{"¿Sesión<br/>iniciada?"}
+    I -- "No" --> J["Inicia sesión<br/>o se registra"]
+    J --> K["Elige una dirección<br/>guardada o escribe una"]
+    I -- "Sí" --> K
+    K --> L["Confirma el pedido"]:::simulated
+    L --> M["Página de confirmación<br/>/pedido/[id]"]
+    M --> N["Seguimiento del pedido<br/>(estados simulados)"]:::simulated
+    N --> O["Desde el historial:<br/>'Volver a pedir' (HU-E17-02)"]
+    O --> P["Reintenta cada línea<br/>contra el catálogo actual"]
+    P --> Q{"¿Todo sigue<br/>disponible?"}
+    Q -- "Sí" --> R["Se agrega todo<br/>al carrito"]
+    Q -- "No" --> S["Avisa qué faltó<br/>y agrega el resto"]
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Simulado.</strong> No hay integración con PayU ni con SIISA: el pedido se confirma y se guarda en el navegador del cliente.</p>
+      <p><strong>Decisión abierta (D3).</strong> El umbral de envío gratis y la tarifa plana son valores de ejemplo, sin dueño asignado en Notion.</p>
+    </div>
+  </section>
+
+  <footer>
+    Preparado a partir del backlog de Notion (épicas E01–E58) y del estado del prototipo en la rama
+    <code>claude-notion</code>. No sustituye las historias de usuario ni el Modelo conceptual de dominio: donde
+    difieran, esos documentos son la fuente de verdad.
+  </footer>
+</div>

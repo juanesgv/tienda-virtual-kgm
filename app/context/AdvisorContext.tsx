@@ -16,15 +16,28 @@ const STORAGE_KEY = "kgm-advisor-requests";
 export function AdvisorProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<ActiveAdvisor | null>(null);
   const [requests, setRequests] = useState<AdvisorRequest[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setRequests(JSON.parse(saved));
+      const parsed = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(parsed)) setRequests(parsed);
     } catch (e) {
       console.error("Error leyendo solicitudes de asesoría:", e);
     }
+    setIsLoaded(true);
   }, []);
+
+  // La persistencia vive en un efecto (no dentro del updater de estado) y tolera almacenamiento bloqueado
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+    } catch (e) {
+      console.error("No se pudo guardar el registro de asesoría:", e);
+    }
+  }, [requests, isLoaded]);
 
   const openAdvisor = (options: AdvisorOpenOptions) => {
     // El retorno al flujo original se captura al abrir (HU-E54-04)
@@ -38,11 +51,7 @@ export function AdvisorProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
       kind: ORIGIN_META[request.origin].kind,
     };
-    setRequests((current) => {
-      const next = [created, ...current];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    setRequests((current) => [created, ...current]);
     return created;
   };
 

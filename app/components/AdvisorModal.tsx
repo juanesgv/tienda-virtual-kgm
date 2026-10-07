@@ -39,8 +39,10 @@ export default function AdvisorModal({ options, onSubmit, onClose }: AdvisorModa
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const [message, setMessage] = useState(options.prefillMessage || "");
-  const [channel, setChannel] = useState<AdvisorChannel>("whatsapp");
-  const [contact, setContact] = useState(currentUser?.phone || "");
+  const [channel, setChannel] = useState<AdvisorChannel>(options.channel ?? "whatsapp");
+  const [contact, setContact] = useState(
+    (options.channel === "correo" ? currentUser?.email : currentUser?.phone) || ""
+  );
   const [includeVehicle, setIncludeVehicle] = useState(true);
   const [includeSearch, setIncludeSearch] = useState(true);
   const [includeProduct, setIncludeProduct] = useState(true);

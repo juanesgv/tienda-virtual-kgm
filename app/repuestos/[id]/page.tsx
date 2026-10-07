@@ -129,7 +129,7 @@ export default function ProductDetailPage() {
     const result = addToCart(product, quantity, vehicleSnapshot);
     setAddedNotice(
       result.limitedTo
-        ? `Solo agregamos ${result.limitedTo} unidades: es lo máximo disponible.`
+        ? `Tu carrito llegó al máximo disponible de este repuesto (${result.limitedTo} ${result.limitedTo === 1 ? "unidad" : "unidades"}).`
         : `${quantity} ${quantity === 1 ? "unidad agregada" : "unidades agregadas"} al carrito.`
     );
   };

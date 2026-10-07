@@ -33,9 +33,9 @@ export default function Footer() {
           <div className="footer-column">
             <h4>Contacto</h4>
             {/* E54: los tres canales abren el mismo flujo de asesoría simulado; el canal real está por definir */}
-            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>Línea de atención</button>
-            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>WhatsApp</button>
-            <button type="button" onClick={() => openAdvisor({ origin: "footer" })}>Correo electrónico</button>
+            <button type="button" onClick={() => openAdvisor({ origin: "footer", channel: "llamada" })}>Línea de atención</button>
+            <button type="button" onClick={() => openAdvisor({ origin: "footer", channel: "whatsapp" })}>WhatsApp</button>
+            <button type="button" onClick={() => openAdvisor({ origin: "footer", channel: "correo" })}>Correo electrónico</button>
           </div>
         </div>
       </div>

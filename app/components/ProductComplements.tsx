@@ -18,15 +18,21 @@ const GROUPS: { type: ProductRelationType; title: string; tag: string }[] = [
 
 export default function ProductComplements({ product }: { product: Product }) {
   const { vehicle, isVehicleSaved } = useVehicle();
-  const { addToCart } = useCart();
+  const { items, addToCart } = useCart();
   const { openAdvisor } = useAdvisor();
 
   const activeVehicle = isVehicleSaved ? vehicle : null;
   const { hasData, resolved, hiddenCount } = getProductRelations(product, activeVehicle);
 
   // Solo lo indispensable y disponible viene marcado; lo demás es decisión del cliente (HU-E55-02/04)
+  const inCart = (id: string) => items.some((item) => item.product.id === id);
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(resolved.filter((r) => r.relation.type === "required" && r.product.stock !== "out_of_stock").map((r) => r.product.id))
+    () =>
+      new Set(
+        resolved
+          .filter((r) => r.relation.type === "required" && r.product.stock !== "out_of_stock" && !inCart(r.product.id))
+          .map((r) => r.product.id)
+      )
   );
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -44,16 +50,29 @@ export default function ProductComplements({ product }: { product: Product }) {
     const vehicleSnapshot =
       isVehicleSaved && vehicle ? { brand: vehicle.brand, model: vehicle.model, year: vehicle.year } : undefined;
     const added: string[] = [];
+    const capped: string[] = [];
     const failed: string[] = [];
+    const addedIds: string[] = [];
     resolved
-      .filter((r) => selected.has(r.product.id))
+      .filter((r) => selected.has(r.product.id) && !inCart(r.product.id)) // nunca duplicar lo que ya está en el carrito
       .forEach((r) => {
         const result = addToCart(r.product, 1, vehicleSnapshot);
-        (result.success ? added : failed).push(r.product.name);
+        if (!result.success) failed.push(r.product.name);
+        else {
+          (result.limitedTo ? capped : added).push(r.product.name);
+          addedIds.push(r.product.id);
+        }
       });
+    // Lo agregado deja de estar seleccionado: un segundo clic no vuelve a sumarlo
+    setSelected((current) => {
+      const next = new Set(current);
+      addedIds.forEach((id) => next.delete(id));
+      return next;
+    });
     setNotice(
       [
         added.length ? `Agregamos al carrito: ${added.join(", ")}.` : "",
+        capped.length ? `Agregamos con cantidad limitada por stock: ${capped.join(", ")}.` : "",
         failed.length ? `No pudimos incluir: ${failed.join(", ")} (sin disponibilidad).` : "",
       ]
         .filter(Boolean)
@@ -110,14 +129,15 @@ export default function ProductComplements({ product }: { product: Product }) {
             <ul>
               {items.map(({ relation, product: related, compatibility }) => {
                 const outOfStock = related.stock === "out_of_stock";
+                const alreadyInCart = inCart(related.id);
                 const inputId = `complement-${related.id}`;
                 return (
                   <li key={related.id} className={`complement-item ${group.type}`}>
                     <input
                       type="checkbox"
                       id={inputId}
-                      checked={selected.has(related.id)}
-                      disabled={outOfStock}
+                      checked={selected.has(related.id) && !alreadyInCart}
+                      disabled={outOfStock || alreadyInCart}
                       onChange={() => toggle(related.id)}
                     />
                     <div className="complement-body">
@@ -127,7 +147,9 @@ export default function ProductComplements({ product }: { product: Product }) {
                       <p className="complement-reason">{relation.reason}</p>
                       <p className="complement-meta">
                         {formatPrice(related.price)}
-                        {outOfStock ? (
+                        {alreadyInCart ? (
+                          <span className="complement-stock low"> · Ya está en tu carrito</span>
+                        ) : outOfStock ? (
                           <span className="complement-stock out"> · Agotado: no se puede agregar</span>
                         ) : related.stock === "low_stock" ? (
                           <span className="complement-stock low"> · Pocas unidades</span>

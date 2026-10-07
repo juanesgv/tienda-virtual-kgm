@@ -36,6 +36,8 @@ export interface AdvisorOpenOptions {
   searchQuery?: string;
   product?: { id: string; name: string; sku: string };
   prefillMessage?: string;
+  /** Canal que el cliente eligió al entrar (p. ej. desde el pie de página); si se omite, WhatsApp. */
+  channel?: AdvisorChannel;
 }
 
 export interface AdvisorRequest {
