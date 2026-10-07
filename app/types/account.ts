@@ -33,22 +33,9 @@ export interface CustomerOrder {
   status: OrderStatus;
   subtotal: number;
   shipping: number;
-  discount: number;
   total: number;
   items: OrderItemSnapshot[];
   shippingAddress: OrderShippingAddress;
-  rewardApplied: boolean;
-}
-
-export interface LoyaltyState {
-  lifetimeSpent: number;
-  progressSpent: number;
-  threshold: number;
-  discountRate: number;
-  benefitStatus: "locked" | "available";
-  nextRewardRemaining: number;
-  lastRewardUnlockedAt?: string;
-  lastRewardUsedAt?: string;
 }
 
 // HU-E16-02: libreta de direcciones editable (independiente del historial de pedidos)
@@ -72,7 +59,6 @@ export interface UserAccount {
   phone?: string;
   createdAt: string;
   orders: CustomerOrder[];
-  loyalty: LoyaltyState;
   addresses: Address[];
 }
 

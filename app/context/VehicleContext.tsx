@@ -31,7 +31,8 @@ interface VehicleContextType {
   activateVehicle: (id: string) => void;
   /** HU-E08-03: elimina un vehículo del garaje. */
   removeVehicle: (id: string) => void;
-  /** HU-E07-01: el filtro "solo compatibles" persiste entre catálogo, búsqueda y categorías. Quitarlo no borra el vehículo. */
+  /** HU-E05-03/E07-01: el filtro "solo compatibles" persiste entre catálogo, búsqueda y categorías. Quitarlo no borra el vehículo;
+   *  en cambio, quedarse sin vehículo activo (quitarlo o borrarlo del garaje) sí lo apaga. */
   compatibleOnly: boolean;
   setCompatibleOnly: (value: boolean) => void;
 }
@@ -108,6 +109,7 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
   const setVehicle = (newVehicle: Vehicle | null) => {
     if (!newVehicle) {
       persist(vehicles, null);
+      setCompatibleOnly(false);
       return;
     }
 
@@ -135,7 +137,10 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
 
   const removeVehicle = (id: string) => {
     const remaining = vehicles.filter((v) => v.id !== id);
-    persist(remaining, activeVehicleId === id ? null : activeVehicleId);
+    const removedActive = activeVehicleId === id;
+    persist(remaining, removedActive ? null : activeVehicleId);
+    // Sin vehículo activo no hay contra qué filtrar: así el filtro no se enciende solo al elegir otro más adelante
+    if (removedActive) setCompatibleOnly(false);
   };
 
   const vehicle = vehicles.find((v) => v.id === activeVehicleId) ?? null;

@@ -28,7 +28,7 @@ export default function ShippingProgress({ subtotal }: { subtotal: number }) {
             aria-valuenow={subtotal}
             aria-label="Avance hacia el envío gratis"
           >
-            <span style={{ width: `${Math.round(shipping.progress * 100)}%` }} />
+            <span style={{ transform: `scaleX(${shipping.progress.toFixed(3)})` }} />
           </div>
           <p className="shipping-progress-rule">
             Envío gratis desde {formatPrice(FREE_SHIPPING_THRESHOLD)}. Por debajo, puedes comprar igual pagando una

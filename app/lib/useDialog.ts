@@ -10,7 +10,10 @@ const FOCUSABLE =
 export function useDialog<T extends HTMLElement>(onClose: () => void, enabled = true) {
   const ref = useRef<T>(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // Mantiene la última versión de onClose sin reinstalar el listener en cada render
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!enabled) return;

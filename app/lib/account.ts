@@ -3,42 +3,15 @@ import {
   CreateOrderInput,
   CustomerOrder,
   LoginInput,
-  LoyaltyState,
   RegisterInput,
   UserAccount,
 } from "../types/account";
 
 export const USERS_STORAGE_KEY = "kgm-users";
 export const CURRENT_USER_STORAGE_KEY = "kgm-current-user-id";
-export const LOYALTY_THRESHOLD = 5_000_000;
-export const LOYALTY_DISCOUNT_RATE = 0.1;
 
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
-}
-
-export function calculateRemainingForReward(loyalty: LoyaltyState) {
-  if (loyalty.benefitStatus === "available") {
-    return 0;
-  }
-
-  return Math.max(0, loyalty.threshold - loyalty.progressSpent);
-}
-
-export function createInitialLoyaltyState(): LoyaltyState {
-  const baseState: LoyaltyState = {
-    lifetimeSpent: 0,
-    progressSpent: 0,
-    threshold: LOYALTY_THRESHOLD,
-    discountRate: LOYALTY_DISCOUNT_RATE,
-    benefitStatus: "locked",
-    nextRewardRemaining: LOYALTY_THRESHOLD,
-  };
-
-  return {
-    ...baseState,
-    nextRewardRemaining: calculateRemainingForReward(baseState),
-  };
 }
 
 export function createUserAccount(input: RegisterInput): UserAccount {
@@ -50,7 +23,6 @@ export function createUserAccount(input: RegisterInput): UserAccount {
     phone: input.phone?.trim() || "",
     createdAt: new Date().toISOString(),
     orders: [],
-    loyalty: createInitialLoyaltyState(),
     addresses: [],
   };
 }
@@ -120,67 +92,15 @@ export function buildOrderId() {
   return `PED-${Date.now().toString().slice(-8)}`;
 }
 
-export function calculateDiscountAmount(subtotal: number, loyalty: LoyaltyState) {
-  if (loyalty.benefitStatus !== "available") {
-    return 0;
-  }
-
-  return Math.round(subtotal * loyalty.discountRate);
-}
-
-export function createOrderRecord(
-  input: CreateOrderInput,
-  loyalty: LoyaltyState
-): CustomerOrder {
-  const discount = calculateDiscountAmount(input.subtotal, loyalty);
-  const total = Math.max(0, input.subtotal + input.shipping - discount);
-
+export function createOrderRecord(input: CreateOrderInput): CustomerOrder {
   return {
     id: buildOrderId(),
     createdAt: new Date().toISOString(),
     status: "pendiente",
     subtotal: input.subtotal,
     shipping: input.shipping,
-    discount,
-    total,
+    total: input.subtotal + input.shipping,
     items: input.items,
     shippingAddress: input.shippingAddress,
-    rewardApplied: discount > 0,
   };
-}
-
-export function updateLoyaltyAfterOrder(
-  previous: LoyaltyState,
-  orderTotal: number,
-  rewardApplied: boolean,
-  timestamp: string
-): LoyaltyState {
-  let progressSpent = rewardApplied ? orderTotal : previous.progressSpent + orderTotal;
-  let benefitStatus: LoyaltyState["benefitStatus"] = "locked";
-  let lastRewardUnlockedAt = previous.lastRewardUnlockedAt;
-  let lastRewardUsedAt = previous.lastRewardUsedAt;
-
-  if (!rewardApplied && progressSpent >= previous.threshold) {
-    benefitStatus = "available";
-    lastRewardUnlockedAt = timestamp;
-    progressSpent = previous.threshold;
-  }
-
-  if (rewardApplied) {
-    lastRewardUsedAt = timestamp;
-  }
-
-  const nextState: LoyaltyState = {
-    ...previous,
-    lifetimeSpent: previous.lifetimeSpent + orderTotal,
-    progressSpent,
-    benefitStatus,
-    lastRewardUnlockedAt,
-    lastRewardUsedAt,
-    nextRewardRemaining: 0,
-  };
-
-  nextState.nextRewardRemaining = calculateRemainingForReward(nextState);
-
-  return nextState;
 }

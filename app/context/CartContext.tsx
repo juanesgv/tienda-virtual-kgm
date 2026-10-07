@@ -68,7 +68,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Espejo síncrono de `items`: addToCart calcula el resultado (cantidad final, límite por stock) de inmediato,
   // sin depender de cuándo React ejecute la función de actualización, y así varios adds seguidos son consistentes.
   const itemsRef = useRef<CartItem[]>([]);
-  itemsRef.current = items;
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   // Cargar carrito desde localStorage al iniciar
   useEffect(() => {

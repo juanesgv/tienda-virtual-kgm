@@ -22,7 +22,7 @@ export default function RepuestosPage() {
   const { vehicle, isVehicleSaved, compatibleOnly, setCompatibleOnly } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // HU-E07-01: el filtro persiste entre pantallas; solo tiene efecto si hay vehículo activo
+  // HU-E05-03/E07-01: el filtro de compatibilidad persiste entre pantallas; solo tiene efecto si hay vehículo activo
   const showOnlyCompatible = compatibleOnly && isVehicleSaved;
   const setShowOnlyCompatible = setCompatibleOnly;
   // HU-E10-05: enlaces como "Ver solo compatibles" (Home, carrito vacío) llegan con ?compatible=true
@@ -135,7 +135,7 @@ export default function RepuestosPage() {
     setSortBy("relevancia");
   }
 
-  // HU-E40: catálogo caído (activado desde el interruptor de demo en el pie de página)
+  // HU-E02-04: catálogo caído (activado desde el interruptor de demo en el pie de página; E40 no tiene historias en Notion)
   if (isInventoryDown) {
     return <ServiceUnavailable />;
   }

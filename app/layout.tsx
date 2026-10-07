@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { VehicleProvider } from "./context/VehicleContext";
 import { CartProvider } from "./context/CartContext";
@@ -7,6 +8,9 @@ import { ServiceStatusProvider } from "./context/ServiceStatusContext";
 import { AdvisorProvider } from "./context/AdvisorContext";
 import { Header } from "./components/Header";
 import Footer from "./components/Footer";
+
+// Inter servida por Next (sin petición externa en el navegador); se expone como variable CSS para --font-sans
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata = {
   title: "KGM Repuestos | Tienda oficial Colombia",
@@ -18,15 +22,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // Extensiones del navegador (p. ej. LanguageTool) agregan atributos a <html>/<body> antes de hidratar;
     // suppressHydrationWarning solo silencia la diferencia de atributos en estos dos nodos, no en sus hijos.
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className={inter.variable} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body suppressHydrationWarning>
         <ServiceStatusProvider>

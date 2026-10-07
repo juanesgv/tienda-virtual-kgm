@@ -23,8 +23,9 @@ El proyecto corresponde a una tienda e-commerce de repuestos automotrices para K
 - carrito de compras,
 - checkout con datos de envio,
 - cuenta de usuario,
-- historial de pedidos,
-- programa de fidelizacion con descuento en compra futura.
+- historial de pedidos.
+
+Fuera del alcance actual (Fase 2): programa de fidelizacion con descuento en compra futura. Ver seccion 4.8.
 
 ## 3. Consideraciones funcionales y tecnicas
 
@@ -73,9 +74,9 @@ Prioridad: Alta
 
 - `RF-005` El sistema debe permitir buscar repuestos por nombre, referencia o texto relacionado.
 - `RF-006` El sistema debe permitir filtrar productos por categoria.
-- `RF-007` El sistema debe permitir asociar un vehiculo a la sesion del usuario.
-- `RF-008` El sistema debe identificar si un producto es compatible con el vehiculo guardado.
-- `RF-009` El sistema debe permitir mostrar solo productos compatibles con el vehiculo del usuario.
+- `RF-007` El sistema debe permitir asociar un vehiculo a la sesion del usuario. El vehiculo puede identificarse por placa, VIN o seleccion guiada de marca, modelo y anio (motor opcional), y se guarda en un garaje con varios vehiculos de los que uno esta activo.
+- `RF-008` El sistema debe identificar, para el vehiculo activo, si un producto es compatible, no compatible o si la compatibilidad no se puede confirmar (por ejemplo, porque falta el motor o el dato del repuesto). "Sin confirmar" nunca se presenta como rechazo.
+- `RF-009` El sistema debe permitir mostrar solo productos compatibles con el vehiculo activo. El filtro solo tiene efecto con un vehiculo activo y se apaga si el usuario se queda sin vehiculo activo.
 
 #### Historias de usuario
 
@@ -95,9 +96,11 @@ Como comprador, quiero guardar mi vehiculo, para saber si los repuestos aplican 
 
 Criterios de aceptacion:
 
-- El usuario puede registrar marca, modelo y anio del vehiculo.
-- El vehiculo queda persistido para visitas posteriores.
-- El sistema usa ese vehiculo para informar compatibilidad en cards y detalle.
+- El usuario puede registrar su vehiculo por placa, por VIN o eligiendo marca, modelo y anio; el motor es opcional. Las busquedas por placa y VIN piden confirmar el resultado antes de guardarlo y, si fallan, ofrecen la seleccion manual. En el prototipo estas busquedas son simuladas (sin RUNT ni SIISA).
+- Si no se indica el motor, el vehiculo queda marcado como "version sin confirmar".
+- El usuario puede guardar varios vehiculos en "Mi garaje", elegir cual esta activo, cambiar de vehiculo y quitar el vehiculo activo sin borrarlo del garaje.
+- El garaje queda persistido para visitas posteriores.
+- El sistema usa el vehiculo activo para informar compatibilidad en cards, detalle y carrito.
 
 **HU-005**
 
@@ -105,9 +108,11 @@ Como comprador, quiero filtrar el catalogo para ver solo repuestos compatibles c
 
 Criterios de aceptacion:
 
-- El filtro solo aparece cuando existe un vehiculo guardado.
-- Al activarlo, el listado muestra solo productos compatibles.
+- El filtro solo aparece cuando existe un vehiculo activo.
+- Al activarlo, el listado muestra solo productos compatibles (los de compatibilidad sin confirmar no se cuentan como compatibles).
 - El sistema informa cuantos productos compatibles existen.
+- El filtro persiste entre catalogo, busqueda y categorias; se apaga si el usuario quita el vehiculo activo o lo borra del garaje.
+- Si el filtro deja el listado vacio, el sistema lo explica y permite quitarlo.
 
 Prioridad: Alta
 
@@ -138,7 +143,8 @@ Como comprador, quiero verificar la compatibilidad del producto con mi vehiculo,
 
 Criterios de aceptacion:
 
-- Si existe vehiculo guardado, el sistema informa si el repuesto es compatible o no.
+- Si existe vehiculo activo, el sistema informa si el repuesto es compatible, no compatible o sin confirmar, con icono y texto (nunca solo con color).
+- Si el repuesto no es compatible, se explica por que y se ofrece consultar a un asesor o ver alternativas que si sirvan.
 - Se muestra una lista de vehiculos compatibles con el producto.
 - El usuario puede cambiar su vehiculo para volver a validar compatibilidad.
 
@@ -175,8 +181,7 @@ Criterios de aceptacion:
 
 - Se muestra subtotal.
 - Se muestra valor del envio o estado de envio gratis.
-- Se muestra el total final a pagar.
-- Si aplica un descuento de fidelizacion, este se refleja en el resumen.
+- Se muestra el total final a pagar (subtotal mas envio).
 
 **HU-010**
 
@@ -204,7 +209,7 @@ Prioridad: Alta
 
 **HU-011**
 
-Como visitante, quiero crear una cuenta, para guardar mis pedidos y acceder a beneficios futuros.
+Como visitante, quiero crear una cuenta, para guardar mis pedidos y mis datos de compra.
 
 Criterios de aceptacion:
 
@@ -229,7 +234,7 @@ Como usuario autenticado, quiero ver un dashboard de bienvenida, para consultar 
 Criterios de aceptacion:
 
 - Se muestra un saludo al usuario.
-- Se muestra un resumen general de pedidos, progreso y acumulados.
+- Se muestra un resumen general de pedidos, total en compras y ultimo pedido.
 - La cuenta presenta navegacion interna por secciones.
 
 Prioridad: Alta
@@ -262,7 +267,7 @@ Como usuario registrado, quiero expandir el detalle de un pedido, para revisar e
 Criterios de aceptacion:
 
 - Cada pedido permite ver un detalle expandible.
-- El detalle incluye subtotal, envio y descuento.
+- El detalle incluye subtotal, envio y total.
 - El detalle lista nombre del producto, referencia, cantidad y precio.
 
 Prioridad: Alta
@@ -272,7 +277,7 @@ Prioridad: Alta
 #### Requerimientos funcionales
 
 - `RF-028` El sistema debe mostrar los datos basicos del usuario autenticado.
-- `RF-029` El sistema debe mostrar direcciones derivadas de pedidos previos.
+- `RF-029` El sistema debe ofrecer una libreta de direcciones propia del usuario, independiente del historial de pedidos, en la que pueda agregar, editar, eliminar y marcar una direccion como predeterminada, y reutilizarla al hacer el checkout.
 - `RF-030` El sistema debe presentar una seccion visual para futuras integraciones de metodos de pago.
 
 #### Historias de usuario
@@ -288,12 +293,14 @@ Criterios de aceptacion:
 
 **HU-017**
 
-Como usuario autenticado, quiero ver las direcciones usadas en mis pedidos, para reutilizarlas como referencia en futuras compras.
+Como usuario autenticado, quiero administrar mis direcciones de envio, para reutilizarlas en futuras compras sin escribirlas de nuevo.
 
 Criterios de aceptacion:
 
-- La seccion de direcciones muestra direccion, ciudad, departamento y telefono.
-- El sistema evita duplicar direcciones identicas.
+- La seccion de direcciones muestra etiqueta, direccion, ciudad, departamento y telefono.
+- El usuario puede agregar, editar y eliminar direcciones; la primera queda como predeterminada y puede cambiarse.
+- Editar o eliminar una direccion no altera los pedidos ya hechos.
+- En el checkout el usuario puede elegir una direccion guardada o escribir una nueva.
 - Si no existen direcciones, se muestra estado vacio.
 
 **HU-018**
@@ -308,9 +315,13 @@ Criterios de aceptacion:
 
 Prioridad: Media
 
-### 4.8 Fidelizacion y beneficios
+### 4.8 Fidelizacion y beneficios (Fase 2, fuera del alcance actual)
 
-#### Requerimientos funcionales
+> **Estado: fuera del alcance del MVP y del prototipo.** La epica E23 (Fidelizacion) esta en Fase 2 en el backlog de Notion, con prioridad Media, y su pagina esta en blanco (sin historias de usuario). La observacion registrada dice que el negocio ya lo contempla pero sin definir y que no hay que distraerse con ello en el MVP. El prototipo no implementa ningun descuento, acumulado ni beneficio de fidelizacion: el total del pedido es subtotal mas envio.
+>
+> Los requerimientos de esta seccion se conservan solo como referencia historica para cuando la epica se priorice. Estan **sin validar**: el umbral de beneficio nunca se definio de forma unica (se manejaron $2.000.000 y $5.000.000 en distintos materiales) y el 10 % de descuento tampoco esta confirmado por negocio. No deben usarse como alcance de desarrollo.
+
+#### Requerimientos funcionales (referencia, Fase 2)
 
 - `RF-031` El sistema debe calcular y almacenar el total acumulado de compras por usuario.
 - `RF-032` El sistema debe calcular el avance del usuario hacia un umbral de beneficio.
@@ -320,7 +331,7 @@ Prioridad: Media
 - `RF-036` El sistema debe mostrar el estado del beneficio y cuanto falta para alcanzarlo.
 - `RF-037` El sistema debe evitar recalcular todo el historico en cada consulta y conservar acumulados actualizados.
 
-#### Historias de usuario
+#### Historias de usuario (referencia, Fase 2)
 
 **HU-019**
 
@@ -353,7 +364,7 @@ Criterios de aceptacion:
 - El descuento se utiliza una sola vez.
 - Tras usarlo, el sistema reinicia el progreso del ciclo de beneficio y conserva el acumulado historico total.
 
-Prioridad: Alta
+Prioridad: Fase 2 (no priorizada)
 
 ## 5. Resumen de prioridades sugeridas
 
@@ -363,8 +374,7 @@ Prioridad: Alta
 - autenticacion,
 - historial de pedidos,
 - checkout asociado a usuario,
-- compatibilidad por vehiculo,
-- fidelizacion y descuento en proxima compra.
+- compatibilidad por vehiculo.
 
 ### Media
 
@@ -372,17 +382,60 @@ Prioridad: Alta
 - seccion estructural de metodos de pago,
 - enriquecimiento del dashboard de cuenta.
 
+### Fase 2 (no priorizada)
+
+- fidelizacion y descuento en proxima compra (seccion 4.8).
+
 ## 6. Proximos pasos sugeridos
 
 - conectar autenticacion con backend real,
 - persistir pedidos y usuarios en base de datos,
 - integrar pasarela de pago,
 - permitir edicion de perfil y direcciones,
-- parametrizar reglas de fidelizacion desde administracion,
+- cuando se priorice la Fase 2, definir con negocio las reglas de fidelizacion antes de implementarlas,
 - agregar estados de pedido sincronizados con operacion/logistica.
 
 ## 7. Conclusiones
 
-El presente documento establece una base estructurada de requerimientos funcionales e historias de usuario para una tienda virtual de repuestos con enfasis en compatibilidad vehicular, experiencia de compra, cuenta de usuario e incentivo de fidelizacion.
+El presente documento establece una base estructurada de requerimientos funcionales e historias de usuario para una tienda virtual de repuestos con enfasis en compatibilidad vehicular, experiencia de compra, y cuenta de usuario. La fidelizacion queda registrada como Fase 2.
 
 Su uso permite alinear desarrollo, negocio y validacion funcional bajo una misma referencia de alcance.
+
+## 8. Trazabilidad con el backlog de Notion
+
+Los codigos `HU-001` a `HU-021` y `RF-001` a `RF-037` de este documento son **locales**: vienen del documento base original y **no coinciden** con los codigos del backlog de Notion (`HU-E##-##`, agrupados por epica `E##`). La fuente de verdad del alcance es Notion; este documento describe el comportamiento esperado y se mantiene alineado con el prototipo.
+
+La tabla se contrasto el 2026-10-07 leyendo las paginas de las epicas del backlog de Notion (E01 a E18, E23, E40, E54 y E55): titulos y criterios de cada historia. Esas paginas siguen marcadas como borrador en Notion. "Cubierta" significa que el prototipo satisface los criterios de la historia con comportamiento funcional o simulado; "parcial" indica que faltan criterios; "no cubierta" que no existe en el prototipo. Es una lectura de los criterios contra el comportamiento del prototipo, no una validacion con el cliente.
+
+| Historia local | Historias de Notion relacionadas | Cobertura del prototipo |
+|---|---|---|
+| HU-001 Inicio | HU-E01-01 Buscar desde la Home; HU-E01-02 Identificar mi vehiculo desde la Home; HU-E01-03 Explorar por categorias desde la Home; HU-E01-04 Entender que la tienda es confiable | E01-02 y E01-03 cubiertas (selector de vehiculo en la portada). E01-01 parcial: el buscador esta en la cabecera, pero no es el elemento mas destacado de la portada. E01-04 parcial: hay un bloque de ventajas con textos de ejemplo; falta el contenido real de garantia, originalidad y envios (depende de E32 y E18) |
+| HU-002 Categorias | HU-E03-01 Navegar por categorias; HU-E03-02 Saber donde estoy y volver atras; HU-E03-03 Categorias filtradas por mi vehiculo | Cubiertas. Las categorias sin productos se muestran vacias con explicacion (decision abierta en Notion) |
+| HU-003 Busqueda y listado | HU-E04-01, 02, 03, 05 y 06; HU-E04-04 Buscar por codigo de parte; HU-E05-01, 02 y 04 (filtros); HU-E02-01, 02, 03 y 04 (listado) | E04-01, 02, 03, 05, 06, E05-01, 02, 04 y E02-01 a E02-04 cubiertas (E02-04 mediante el interruptor de demostracion de catalogo caido). E04-04 por validar: la busqueda admite referencia, sin verificar los criterios de referencia intercambiable y aviso al asesor |
+| HU-004 Vehiculo y garaje | HU-E08-01 Identificar mi vehiculo; HU-E08-02 Seleccionar manualmente; HU-E08-03 Varios vehiculos; HU-E08-04 Usar un vehiculo sin cuenta; HU-E08-05 Cambiar o quitar el activo; HU-E16-03 Garaje desde el perfil | Cubiertas. Placa y VIN son simuladas (sin SIISA); la seleccion manual no pide version, solo motor opcional, y avisa que la compatibilidad puede ser aproximada. El garaje se guarda en el navegador |
+| HU-005 Filtro de compatibles | HU-E05-03 Filtrar por compatibilidad; HU-E07-01 Ver solo lo que sirve para mi carro; HU-E04-06 Buscar con mi vehiculo; HU-E03-03 | Cubiertas |
+| HU-006 Detalle del producto | HU-E06-01 Ver toda la informacion; HU-E06-04 Agregar al carrito; HU-E13-01 Saber si esta disponible; HU-E13-03 Aviso de disponibilidad; HU-E55-01, 02 y 03 | E06-04, E13-01 y E55-01 a 03 cubiertas. E06-01 parcial: muestra una sola imagen (sin galeria). E13-03 cubierta de forma simulada (pide iniciar sesion y no envia correo). La referencia descontinuada no aparece en el catalogo y su enlace directo explica que ya no se vende |
+| HU-007 Compatibilidad en el producto | HU-E06-02 Confirmar que sirve; HU-E06-03 Para que vehiculos sirve; HU-E06-05 Salir del paso si no me sirve; HU-E07-02 Estado de compatibilidad; HU-E07-03 No perder de vista los no compatibles; HU-E07-04 Alternativas compatibles; HU-E10-04 Advertencia antes de agregar | Cubiertas. La lista de vehiculos compatibles no tiene busqueda interna (E06-03, parcial). Decision abierta en Notion: el prototipo permite agregar un producto no compatible con advertencia |
+| HU-008 Carrito | HU-E10-01 Armar el carrito sin cuenta; HU-E10-02 Modificar el carrito; HU-E10-03 Ver el resumen; HU-E10-05 Carrito vacio con salida; HU-E13-02 Que no me vendan lo que no hay | Cubiertas. El carrito persiste en el navegador; no hay carrito en servidor |
+| HU-009 Resumen del pedido | HU-E10-03; HU-E11-04 Ver el total real antes de pagar; HU-E18-02 Pagar el envio cuando mi compra es pequena; HU-E18-03 Cuanto me falta para el envio gratis | E18-02 y E18-03 cubiertas con valores de ejemplo (decision comercial D3 pendiente). E11-04 parcial: el total se desglosa en productos y envio; no hay impuestos |
+| HU-010 Checkout | HU-E11-01 Revisar mi pedido; HU-E11-02 Donde recibir mi pedido; HU-E11-05 Enterarme si algo cambio; HU-E15-01 Confirmacion del pedido; HU-E18-01; HU-E11-03 Datos de facturacion | E11-01, E11-05 y E15-01 cubiertas (sin pago real ni correo de confirmacion). E11-02 parcial: direcciones guardadas si; opciones de envio y cobertura no. E18-01 y E11-03 no cubiertas (E18-01 esta bloqueada por contrato con la transportadora; E11-03 depende de DIAN). El pago (E12, PayU) no esta en el prototipo |
+| HU-011 Crear cuenta | HU-E09-01 Crear mi cuenta para comprar | Cubierta (registro en el checkout, errores por campo, ofrece iniciar sesion si el correo existe) |
+| HU-012 Iniciar sesion | HU-E09-02 Iniciar sesion sin perder mi carrito; HU-E09-03 Recuperar el acceso; HU-E09-04 Mantener mi sesion; HU-E09-05 Registrarme para que me avisen | E09-02 y E09-04 cubiertas. E09-03 cubierta de forma simulada (sin correo real). E09-05 cubierta de forma simulada |
+| HU-013 Dashboard de cuenta | sin equivalente en el backlog (E16 no define un resumen de cuenta) | Existe en el prototipo; fuera de las historias documentadas |
+| HU-014 y HU-015 Pedidos | HU-E15-02 Consultar el estado; HU-E15-03 Seguir el envio; HU-E17-01 Ver mis compras anteriores; HU-E17-02 Volver a pedir; HU-E17-03 Historial por vehiculo | Cubiertas. E15-03 es simulada: no hay integracion con transportador ni notificaciones |
+| HU-016 Datos personales | HU-E16-01 Ver y actualizar mis datos; HU-E16-04 Cambiar mi contrasena | Cubiertas |
+| HU-017 Direcciones | HU-E16-02 Gestionar mis direcciones; HU-E11-02 | Cubiertas |
+| HU-018 Metodos de pago | sin historia propia; relacionada con la epica E12 (Pagos, PayU) | Solo existe la seccion estructural vacia; no hay pago |
+| HU-019 a HU-021 Fidelizacion | epica E23 (Fase 2): la pagina esta en blanco, sin historias | No implementada |
+
+Historias de Notion que el prototipo implementa y que este documento no describe todavia como historias propias:
+
+- Asesoria asistida (epica E54, posible funcionalidad): HU-E54-01 Pedir ayuda cuando no se que repuesto necesito; HU-E54-02 Que el asesor ya sepa de que le hablo; HU-E54-03 Describir mi problema con mis propias palabras; HU-E54-04 Retomar mi compra tras la orientacion; HU-E54-05 Distinguir consultas por friccion de las de asesoria. Canal, horario y datos que necesita el asesor son decisiones abiertas: el prototipo los simula.
+- Relaciones entre productos (epica E55, posible funcionalidad): HU-E55-01 a 03 y HU-E55-04 (llevar todo lo necesario de una vez, por validar). La viabilidad depende de que exista el dato (curaduria con Posventa).
+
+Observaciones sobre la trazabilidad en el codigo:
+
+- La epica E40 (estados degradados) no tiene historias en Notion: su pagina esta en blanco. Los comentarios del prototipo que citaban `HU-E40` ahora citan HU-E02-04 (catalogo no disponible) y aclaran que E40 no tiene historias.
+- Los comentarios del filtro de compatibilidad citan HU-E05-03 junto con HU-E07-01, porque la compatibilidad como filtro opcional esta en E05-03.
+- Los demas comentarios de trazabilidad del codigo se contrastaron con los titulos y criterios de Notion y coinciden.
+- No hay en el backlog una historia que obligue a mostrar descuentos de fidelizacion; el prototipo ya no los muestra.

@@ -12,11 +12,11 @@ interface VehicleModalProps {
 type Tab = "placa" | "vin" | "linea";
 
 // Catálogo simulado para la selección guiada (HU-E08-02). No representa el catálogo real de SIISA.
-const VEHICLE_CATALOG: Record<string, string[]> = {
+export const VEHICLE_CATALOG: Record<string, string[]> = {
   KGM: ["Tivoli", "Tivoli XLV", "Korando", "Rexton", "Musso"],
   SsangYong: ["Tivoli", "Korando", "Rexton"],
 };
-const YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015];
+export const YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015];
 const ENGINES = ["1.6L Gasolina", "1.6L Diésel", "2.2L Diésel", "No estoy seguro"];
 
 // HU-E08-01: simulación de búsqueda por placa/VIN. Nunca llama a un servicio real (RUNT/SIISA).

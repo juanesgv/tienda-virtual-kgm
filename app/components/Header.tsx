@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useVehicle } from "../context/VehicleContext";
 import { useCart } from "../context/CartContext";
 import { useUser } from "../context/UserContext";
@@ -11,6 +11,49 @@ import { getSearchSuggestions } from "../data/products";
 import VehicleModal from "./VehicleModal";
 import CartDrawer from "./CartDrawer";
 import { BrandLogo } from "./BrandLogo";
+
+const NAV_CATEGORIES = [
+  { id: "frenos", label: "Frenos" },
+  { id: "suspension", label: "Suspensión" },
+  { id: "motor", label: "Motor" },
+  { id: "filtros", label: "Filtros" },
+  { id: "transmision", label: "Transmisión" },
+  { id: "electricos", label: "Sistema eléctrico" },
+  { id: "carroceria", label: "Carrocería" },
+];
+
+// La categoría vive en la query (?categoria=), no en la ruta: por eso el estado activo sale de searchParams.
+// "Todas las categorías" solo está activa en el catálogo sin categoría elegida.
+function CategoryNavLinks({ onCatalog }: { onCatalog: boolean }) {
+  const category = useSearchParams().get("categoria");
+  return (
+    <>
+      <Link
+        href="/repuestos"
+        className={`nav-item ${onCatalog && !category ? "active" : ""}`}
+        aria-current={onCatalog && !category ? "page" : undefined}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true">
+          <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm-6 0h4v-4h-4v4z"/>
+        </svg>
+        Todas las categorías
+      </Link>
+      {NAV_CATEGORIES.map((c) => {
+        const active = onCatalog && category === c.id;
+        return (
+          <Link
+            key={c.id}
+            href={`/repuestos?categoria=${c.id}`}
+            className={`nav-item ${active ? "active" : ""}`}
+            aria-current={active ? "page" : undefined}
+          >
+            {c.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -25,7 +68,7 @@ export function Header() {
   const { currentUser, isAuthenticated } = useUser();
   const { isInventoryDown } = useServiceStatus();
 
-  // HU-E04-03/E40: sugerencias en vivo mientras se escribe; se apagan si el inventario está caído
+  // HU-E04-03: sugerencias en vivo mientras se escribe; se apagan si el inventario está caído (HU-E02-04)
   const suggestions = useMemo(
     () => (isInventoryDown ? [] : getSearchSuggestions(searchQuery)),
     [searchQuery, isInventoryDown]
@@ -108,7 +151,7 @@ export function Header() {
             {showSuggestions && suggestions.length > 0 && (
               <ul className="search-suggestions" role="listbox" id="search-suggestions-list">
                 {suggestions.map((suggestion, index) => (
-                  <li key={`${suggestion.type}-${suggestion.href}`}>
+                  <li key={`${suggestion.type}-${suggestion.href}`} role="presentation">
                     <button
                       type="button"
                       role="option"
@@ -184,19 +227,9 @@ export function Header() {
         {/* Navegación */}
         <nav className="main-nav">
           <div className="nav-container">
-            <Link href="/repuestos" className={`nav-item ${isActive("/repuestos") ? "active" : ""}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm-6 0h4v-4h-4v4z"/>
-              </svg>
-              Todas las categorías
-            </Link>
-            <Link href="/repuestos?categoria=frenos" className={`nav-item ${pathname?.includes("frenos") ? "active" : ""}`}>Frenos</Link>
-            <Link href="/repuestos?categoria=suspension" className={`nav-item ${pathname?.includes("suspension") ? "active" : ""}`}>Suspensión</Link>
-            <Link href="/repuestos?categoria=motor" className={`nav-item ${pathname?.includes("motor") ? "active" : ""}`}>Motor</Link>
-            <Link href="/repuestos?categoria=filtros" className={`nav-item ${pathname?.includes("filtros") ? "active" : ""}`}>Filtros</Link>
-            <Link href="/repuestos?categoria=transmision" className={`nav-item ${pathname?.includes("transmision") ? "active" : ""}`}>Transmisión</Link>
-            <Link href="/repuestos?categoria=electricos" className={`nav-item ${pathname?.includes("electricos") ? "active" : ""}`}>Sistema eléctrico</Link>
-            <Link href="/repuestos?categoria=carroceria" className={`nav-item ${pathname?.includes("carroceria") ? "active" : ""}`}>Carrocería</Link>
+            <Suspense fallback={null}>
+              <CategoryNavLinks onCatalog={isActive("/repuestos") && pathname === "/repuestos"} />
+            </Suspense>
           </div>
         </nav>
       </header>

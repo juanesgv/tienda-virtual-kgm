@@ -55,10 +55,10 @@ export default function AdvisorRegistryPage() {
                         Vehículo: {r.vehicle.brand} {r.vehicle.model} {r.vehicle.year}
                       </div>
                     )}
-                    {r.searchQuery && <div>Búsqueda: "{r.searchQuery}"</div>}
+                    {r.searchQuery && <div>Búsqueda: “{r.searchQuery}”</div>}
                     {r.product && <div>Repuesto: {r.product.name}</div>}
                     {r.cartItems && <div>Carrito: {r.cartItems} producto(s)</div>}
-                    {r.message && <div>Mensaje: "{r.message}"</div>}
+                    {r.message && <div>Mensaje: “{r.message}”</div>}
                     {!r.vehicle && !r.searchQuery && !r.product && !r.cartItems && !r.message && "—"}
                   </td>
                   <td>

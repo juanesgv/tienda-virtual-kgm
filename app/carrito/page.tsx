@@ -35,7 +35,6 @@ export default function CartPage() {
     register,
     login,
     createOrderForCurrentUser,
-    getAvailableDiscountAmount,
   } = useUser();
   const { vehicle, isVehicleSaved } = useVehicle();
   const router = useRouter();
@@ -84,8 +83,7 @@ export default function CartPage() {
 
   const subtotal = getSubtotal();
   const shippingCost = getShippingCost();
-  const loyaltyDiscount = getAvailableDiscountAmount(subtotal);
-  const finalTotal = Math.max(0, subtotal + shippingCost - loyaltyDiscount);
+  const finalTotal = subtotal + shippingCost;
 
   const fullName = isAuthenticated && currentUser ? currentUser.name : formData.nombre;
   const email = isAuthenticated && currentUser ? currentUser.email : formData.email;
@@ -312,20 +310,20 @@ export default function CartPage() {
               </div>
               {/* HU-E11-02: tiempo estimado, no solo costo. El costo por zona/cobertura sigue siendo decisión abierta (E18). */}
               <p className="shipping-eta">Entrega estimada: 3 a 5 días hábiles</p>
-              {loyaltyDiscount > 0 && (
-                <div className="summary-row discount">
-                  <span>Descuento fidelización</span>
-                  <span>-{formatPrice(loyaltyDiscount)}</span>
-                </div>
-              )}
               <div className="summary-row total">
                 <span>Total</span>
                 <span>{formatPrice(finalTotal)}</span>
               </div>
             </div>
+
+            {/* El formulario de envío está en la columna ancha; este botón lo envía (atributo form), con su validación */}
+            <button type="submit" form="checkout-form" className="btn-main">
+              Confirmar pedido
+            </button>
+            <p className="form-note">Aún no se cobra nada: te contactaremos para coordinar el pago.</p>
           </div>
 
-          <form className="checkout-form" onSubmit={handleSubmit}>
+          <form id="checkout-form" className="checkout-form" onSubmit={handleSubmit}>
             <h3>Datos de envío</h3>
             {formError ? <p className="account-message error">{formError}</p> : null}
 
@@ -378,7 +376,7 @@ export default function CartPage() {
                   <p>
                     {isAuthenticated
                       ? "Este pedido quedará guardado en tu historial."
-                      : "Crea tu cuenta o inicia sesión para guardar pedidos y activar fidelización."}
+                      : "Crea tu cuenta o inicia sesión para guardar tus pedidos."}
                   </p>
                 </div>
               </div>
@@ -415,18 +413,7 @@ export default function CartPage() {
                     />
                   </div>
                 </>
-              ) : currentUser?.loyalty.benefitStatus === "available" ? (
-                <p className="loyalty-badge-message">
-                  Se aplicará automáticamente tu 10% de descuento:
-                  {" "}
-                  <strong>-{formatPrice(loyaltyDiscount)}</strong>
-                </p>
-              ) : (
-                <p className="loyalty-badge-message muted">
-                  Te faltan <strong>{formatPrice(currentUser?.loyalty.nextRewardRemaining || 0)}</strong> para
-                  obtener 10% en tu próxima compra.
-                </p>
-              )}
+              ) : null}
             </div>
 
             {/* HU-E11-02: reutilizar una dirección ya guardada en vez de escribirla de nuevo */}

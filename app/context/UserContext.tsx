@@ -9,14 +9,12 @@ import {
   useState,
 } from "react";
 import {
-  calculateDiscountAmount,
   createAddress,
   createOrderRecord,
   createUserAccount,
   CURRENT_USER_STORAGE_KEY,
   findUserByEmail,
   RegistrationFieldErrors,
-  updateLoyaltyAfterOrder,
   USERS_STORAGE_KEY,
   validateLoginInput,
   validateRegistrationInputFields,
@@ -54,8 +52,7 @@ interface UserContextType {
     error?: string;
     orderId?: string;
   };
-  getAvailableDiscountAmount: (subtotal: number) => number;
-  // HU-E16-01
+  // HU-E16-01: ver y actualizar mis datos
   updateProfile: (input: { name?: string; phone?: string }) => AuthResult;
   // HU-E16-04: requiere confirmar la contraseña actual
   changePassword: (currentPassword: string, newPassword: string) => AuthResult;
@@ -171,7 +168,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return { ok: false, error: "Debes iniciar sesión para completar el pedido." };
     }
 
-    const order = createOrderRecord(input, targetUser.loyalty);
+    const order = createOrderRecord(input);
 
     setUsers((currentUsers) =>
       currentUsers.map((user) => {
@@ -179,31 +176,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
           return user;
         }
 
-        const loyalty = updateLoyaltyAfterOrder(
-          user.loyalty,
-          order.total,
-          order.rewardApplied,
-          order.createdAt
-        );
-
         return {
           ...user,
           phone: input.shippingAddress.phone || user.phone,
           orders: [order, ...user.orders],
-          loyalty,
         };
       })
     );
 
     return { ok: true, orderId: order.id };
-  };
-
-  const getAvailableDiscountAmount = (subtotal: number) => {
-    if (!currentUser) {
-      return 0;
-    }
-
-    return calculateDiscountAmount(subtotal, currentUser.loyalty);
   };
 
   // HU-E16-01: editar datos personales (el correo no es editable aquí, ver UI)
@@ -335,7 +316,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         createOrderForCurrentUser,
-        getAvailableDiscountAmount,
         updateProfile,
         changePassword,
         resetPassword,

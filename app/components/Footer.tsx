@@ -41,7 +41,7 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <p>© 2026 KGM Repuestos Colombia. Todos los derechos reservados.</p>
-        {/* HU-E40: interruptor de demo para presentar el escenario "catálogo/SIISA caído" */}
+        {/* HU-E02-04: interruptor de demo para presentar el escenario "catálogo/SIISA caído" (E40 no tiene historias en Notion) */}
         <Link href="/asesoria/registro" className="demo-toggle">Demo: registro de solicitudes de asesoría</Link>
         <button type="button" className="demo-toggle" onClick={toggleInventoryDown}>
           <span className={`demo-toggle-dot ${isInventoryDown ? "on" : ""}`} />

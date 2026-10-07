@@ -18,7 +18,7 @@ export default function SearchPage() {
   const { isInventoryDown } = useServiceStatus();
   const { openAdvisor } = useAdvisor();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // HU-E07-01: el filtro persiste entre pantallas; solo tiene efecto si hay vehículo activo
+  // HU-E05-03/E07-01: el filtro de compatibilidad persiste entre pantallas; solo tiene efecto si hay vehículo activo
   const showOnlyCompatible = compatibleOnly && isVehicleSaved;
   const setShowOnlyCompatible = setCompatibleOnly;
   const [sortBy, setSortBy] = useState("relevancia");
@@ -74,7 +74,8 @@ export default function SearchPage() {
     setForceOriginalTerm(false);
   }, [query]);
 
-  // HU-E40: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página)
+  // HU-E02-04: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página).
+  // La épica E40 no tiene historias redactadas en Notion; el criterio concreto vive en HU-E02-04.
   if (isInventoryDown) {
     return (
       <ServiceUnavailable
@@ -100,11 +101,11 @@ export default function SearchPage() {
           <p className="results-count">
             {filteredResults.length > 0 && !correctedQuery ? (
               <>
-                Se encontraron <strong>{filteredResults.length}</strong> productos para "<strong>{query}</strong>"
+                Se encontraron <strong>{filteredResults.length}</strong> productos para “<strong>{query}</strong>”
               </>
             ) : filteredResults.length === 0 && !correctedQuery && !hiddenByVehicleFilter ? (
               <>
-                No se encontraron productos para "<strong>{query}</strong>"
+                No se encontraron productos para “<strong>{query}</strong>”
               </>
             ) : null}
           </p>
@@ -117,9 +118,9 @@ export default function SearchPage() {
               <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
             </svg>
             <span>
-              No encontramos "<strong>{query}</strong>", mostrando resultados para "<strong>{correctedQuery}</strong>".{" "}
+              No encontramos “<strong>{query}</strong>”, mostrando resultados para “<strong>{correctedQuery}</strong>”.{" "}
               <button type="button" className="link-button" onClick={() => setForceOriginalTerm(true)}>
-                Buscar "{query}" tal como lo escribí
+                Buscar “{query}” tal como lo escribí
               </button>
             </span>
           </div>
@@ -225,7 +226,7 @@ export default function SearchPage() {
               </svg>
               <h3>Ninguno de estos resultados es compatible con tu vehículo</h3>
               <p>
-                Encontramos <strong>{searchResults.length}</strong> productos para "<strong>{query}</strong>",
+                Encontramos <strong>{searchResults.length}</strong> productos para “<strong>{query}</strong>”,
                 pero ninguno está confirmado como compatible con tu <strong>{vehicle?.brand} {vehicle?.model}</strong>.
               </p>
               <button className="btn-main" onClick={() => setShowOnlyCompatible(false)}>

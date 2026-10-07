@@ -286,31 +286,6 @@ export default function AccountPage() {
     setReorderMessage({ orderId, text: `Agregamos ${result.added} producto(s) a tu carrito con el precio actual.${skippedNote}` });
   };
 
-  const nextRewardMessage = useMemo(() => {
-    if (!currentUser) {
-      return null;
-    }
-
-    if (currentUser.loyalty.benefitStatus === "available") {
-      return "Tu 10% de descuento ya está listo para aplicarse en la próxima compra.";
-    }
-
-    return `Te faltan ${formatPrice(currentUser.loyalty.nextRewardRemaining)} para desbloquear el beneficio.`;
-  }, [currentUser]);
-
-  const completionRate = useMemo(() => {
-    if (!currentUser) {
-      return 0;
-    }
-
-    return currentUser.loyalty.benefitStatus === "available"
-      ? 100
-      : Math.min(
-          100,
-          (currentUser.loyalty.progressSpent / currentUser.loyalty.threshold) * 100
-        );
-  }, [currentUser]);
-
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const result = login(loginData);
@@ -414,11 +389,10 @@ export default function AccountPage() {
       <div className="account-page account-auth-shell">
         <section className="account-auth-hero">
           <div className="account-auth-copy">
-            <p className="account-eyebrow">Cuenta KGM Repuestos</p>
-            <h1>Todo tu historial, beneficios y datos en un solo lugar</h1>
+            <h1>Todo tu historial y tus datos en un solo lugar</h1>
             <p>
-              Accede a tus pedidos, guarda direcciones, revisa tu progreso de fidelización
-              y mantén tu información lista para comprar más rápido.
+              Accede a tus pedidos, guarda direcciones y vehículos, y mantén tu información lista
+              para comprar más rápido.
             </p>
 
             <div className="account-auth-benefits">
@@ -431,22 +405,12 @@ export default function AccountPage() {
                 <span>Direcciones listas</span>
               </div>
               <div className="account-benefit-chip">
-                {getSectionIcon("payments")}
-                <span>Beneficios visibles</span>
+                {getSectionIcon("garage")}
+                <span>Mi garaje</span>
               </div>
             </div>
           </div>
 
-          <div className="account-auth-highlight">
-            <div className="account-highlight-card">
-              <span className="account-highlight-kicker">Fidelización</span>
-              <strong>10% en tu próxima compra</strong>
-              <p>Al superar {formatPrice(5000000)} activas un descuento único para el siguiente pedido.</p>
-              <div className="account-highlight-meter" aria-hidden="true">
-                <span />
-              </div>
-            </div>
-          </div>
         </section>
 
         <section className="account-auth-card">
@@ -676,29 +640,13 @@ export default function AccountPage() {
     <div className="account-page">
       <section className="account-hero">
         <div className="account-hero-copy">
-          <p className="account-eyebrow">Dashboard del cliente</p>
           <h1>Hola, {currentUser.name.split(" ")[0]}</h1>
           <p>
-            Administra tus pedidos, datos de contacto y beneficios sin perder de vista tu
-            progreso de compra.
+            Administra tus pedidos, direcciones, vehículos y datos de contacto.
           </p>
           <div className="account-hero-tags">
-            <span className="account-hero-tag">{currentUser.orders.length} pedidos</span>
-            <span className={`account-hero-tag ${currentUser.loyalty.benefitStatus === "available" ? "success" : ""}`}>
-              {currentUser.loyalty.benefitStatus === "available" ? "Beneficio disponible" : "Beneficio en progreso"}
-            </span>
+            <span className="account-hero-tag">{currentUser.orders.length} {currentUser.orders.length === 1 ? "pedido" : "pedidos"}</span>
           </div>
-        </div>
-
-        <div className="account-hero-panel">
-          <div className="account-hero-panel-top">
-            <span>Acumulado actual</span>
-            <strong>{formatPrice(currentUser.loyalty.progressSpent)}</strong>
-          </div>
-          <div className="account-progress-bar" aria-hidden="true">
-            <span style={{ width: `${completionRate}%` }} />
-          </div>
-          <p>{nextRewardMessage}</p>
         </div>
       </section>
 
@@ -729,7 +677,6 @@ export default function AccountPage() {
               <section className="account-panel">
                 <div className="account-panel-heading">
                   <div>
-                    <p className="account-panel-kicker">Resumen</p>
                     <h2>Vista general de tu cuenta</h2>
                   </div>
                 </div>
@@ -737,14 +684,13 @@ export default function AccountPage() {
                 <div className="account-stats-grid">
                   <InfoCard
                     title="Total acumulado"
-                    value={formatPrice(currentUser.loyalty.lifetimeSpent)}
+                    value={formatPrice(currentUser.orders.reduce((sum, o) => sum + o.total, 0))}
                     description="Histórico de compras registradas en esta cuenta."
                   />
                   <InfoCard
-                    title="Estado del beneficio"
-                    value={currentUser.loyalty.benefitStatus === "available" ? "Disponible" : "En progreso"}
-                    description={nextRewardMessage || ""}
-                    accent={currentUser.loyalty.benefitStatus === "available" ? "success" : "warm"}
+                    title="Pedidos realizados"
+                    value={String(currentUser.orders.length)}
+                    description="Consulta el detalle en Mis pedidos."
                   />
                   <InfoCard
                     title="Direcciones guardadas"
@@ -754,30 +700,10 @@ export default function AccountPage() {
                 </div>
               </section>
 
-              <section className="account-grid-duo">
+              <section>
                 <article className="account-panel">
                   <div className="account-panel-heading">
                     <div>
-                      <p className="account-panel-kicker">Fidelización</p>
-                      <h2>Tu progreso hacia el descuento</h2>
-                    </div>
-                  </div>
-                  <div className="account-loyalty-card">
-                    <div className="account-loyalty-row">
-                      <span>Meta</span>
-                      <strong>{formatPrice(currentUser.loyalty.threshold)}</strong>
-                    </div>
-                    <div className="account-progress-bar" aria-hidden="true">
-                      <span style={{ width: `${completionRate}%` }} />
-                    </div>
-                    <p>{nextRewardMessage}</p>
-                  </div>
-                </article>
-
-                <article className="account-panel">
-                  <div className="account-panel-heading">
-                    <div>
-                      <p className="account-panel-kicker">Actividad</p>
                       <h2>Último pedido</h2>
                     </div>
                   </div>
@@ -809,7 +735,6 @@ export default function AccountPage() {
             <section className="account-panel">
               <div className="account-panel-heading">
                 <div>
-                  <p className="account-panel-kicker">Pedidos</p>
                   <h2>Mis pedidos</h2>
                 </div>
                 <span className="account-panel-badge">{currentUser.orders.length} registrados</span>
@@ -865,8 +790,7 @@ export default function AccountPage() {
 
                         <div className="order-breakdown-grid">
                           <div><span>Subtotal</span><strong>{formatPrice(order.subtotal)}</strong></div>
-                          <div><span>Envío</span><strong>{formatPrice(order.shipping)}</strong></div>
-                          <div><span>Descuento</span><strong>{order.discount > 0 ? `-${formatPrice(order.discount)}` : "No aplica"}</strong></div>
+                          <div><span>Envío</span><strong>{order.shipping === 0 ? "Gratis" : formatPrice(order.shipping)}</strong></div>
                         </div>
 
                         {hiddenCount > 0 && (
@@ -914,7 +838,6 @@ export default function AccountPage() {
               <section className="account-panel">
                 <div className="account-panel-heading">
                   <div>
-                    <p className="account-panel-kicker">Perfil</p>
                     <h2>Datos personales</h2>
                   </div>
                 </div>
@@ -967,7 +890,6 @@ export default function AccountPage() {
               <section className="account-panel">
                 <div className="account-panel-heading">
                   <div>
-                    <p className="account-panel-kicker">Seguridad</p>
                     <h2>Cambiar contraseña</h2>
                   </div>
                 </div>
@@ -1019,7 +941,6 @@ export default function AccountPage() {
             <section className="account-panel">
               <div className="account-panel-heading">
                 <div>
-                  <p className="account-panel-kicker">Direcciones</p>
                   <h2>Mis direcciones</h2>
                 </div>
                 {!showAddressForm && (
@@ -1159,7 +1080,6 @@ export default function AccountPage() {
             <section className="account-panel">
               <div className="account-panel-heading">
                 <div>
-                  <p className="account-panel-kicker">Vehículos</p>
                   <h2>Mi garaje</h2>
                 </div>
               </div>
@@ -1210,7 +1130,6 @@ export default function AccountPage() {
             <section className="account-panel">
               <div className="account-panel-heading">
                 <div>
-                  <p className="account-panel-kicker">Pagos</p>
                   <h2>Métodos de pago</h2>
                 </div>
               </div>

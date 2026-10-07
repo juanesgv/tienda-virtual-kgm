@@ -146,7 +146,7 @@ export default function AdvisorModal({ options, onSubmit, onClose }: AdvisorModa
               {options.searchQuery && (
                 <label className="advisor-check">
                   <input type="checkbox" checked={includeSearch} onChange={(e) => setIncludeSearch(e.target.checked)} />
-                  Mi búsqueda: "{options.searchQuery}"
+                  Mi búsqueda: “{options.searchQuery}”
                 </label>
               )}
               {options.product && (
@@ -233,10 +233,10 @@ export default function AdvisorModal({ options, onSubmit, onClose }: AdvisorModa
                     Vehículo: {sent.vehicle.brand} {sent.vehicle.model} {sent.vehicle.year}
                   </li>
                 )}
-                {sent.searchQuery && <li>Búsqueda: "{sent.searchQuery}"</li>}
+                {sent.searchQuery && <li>Búsqueda: “{sent.searchQuery}”</li>}
                 {sent.product && <li>Repuesto: {sent.product.name}</li>}
                 {sent.cartItems && <li>Carrito: {sent.cartItems} producto(s)</li>}
-                {sent.message && <li>Tu descripción: "{sent.message}"</li>}
+                {sent.message && <li>Tu descripción: “{sent.message}”</li>}
               </ul>
             </div>
             <p className="advisor-intro">Tu carrito y tu vehículo se conservan para que retomes tu compra.</p>

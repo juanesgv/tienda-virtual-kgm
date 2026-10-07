@@ -15,6 +15,7 @@ import ServiceUnavailable from "../../components/ServiceUnavailable";
 import { products } from "../../data/products";
 import { useServiceStatus } from "../../context/ServiceStatusContext";
 import { useAdvisor } from "../../context/AdvisorContext";
+import { FREE_SHIPPING_THRESHOLD } from "../../data/shipping";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -45,7 +46,7 @@ export default function ProductDetailPage() {
     .filter((p) => p.category === product?.category && p.id !== product?.id)
     .slice(0, 3);
 
-  // HU-E40: si el inventario está caído, ni siquiera podemos confirmar si el producto existe
+  // HU-E02-04: si el inventario está caído, ni siquiera podemos confirmar si el producto existe (E40 no tiene historias en Notion)
   if (isInventoryDown) {
     return (
       <ServiceUnavailable
@@ -113,6 +114,10 @@ export default function ProductDetailPage() {
     }
   })();
 
+  // Una fila de aplicabilidad es "tu vehículo" solo si de verdad aplica (modelo, año y motor), no solo por marca y modelo
+  const entryAppliesToVehicle = (entry: (typeof product.compatibleVehicles)[number]) =>
+    !!vehicle && getCompatibilityStatus({ ...product, compatibleVehicles: [entry] }, vehicle) === "compatible";
+
   // HU-E07-04: si este repuesto no sirve para el vehículo, ofrecer alternativas que sí sirvan
   const compatibleAlternatives =
     compatibilityStatus === "not_compatible" && vehicle
@@ -177,26 +182,27 @@ export default function ProductDetailPage() {
           {/* Banner de compatibilidad: 3 estados reales */}
           {isVehicleSaved && (
             <div className={`compatibility-banner ${isCompatible ? "compatible" : isUnknownCompatibility ? "unknown" : "not-compatible"}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+              {/* Un icono distinto por estado (check, interrogación, X): no depende solo del color */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true">
                 <path
                   d={
                     isCompatible
                       ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                       : isUnknownCompatibility
-                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm0-4h-2V7h2v8z"
-                      : "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                      : "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"
                   }
                 />
               </svg>
-              <div className="banner-content">
-                <span className="banner-title">
+              <div className="compat-banner-content">
+                <span className="compat-banner-title">
                   {isCompatible
                     ? "Compatible con tu vehículo"
                     : isUnknownCompatibility
                     ? "Debe verificarse con tu vehículo"
                     : "No compatible con tu vehículo"}
                 </span>
-                <span className="banner-text">
+                <span className="compat-banner-text">
                   {isCompatible && (
                     <>Este repuesto es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.</>
                   )}
@@ -210,6 +216,16 @@ export default function ProductDetailPage() {
                     <>Este repuesto no es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>. {reasonText}</>
                   )}
                 </span>
+                {/* E54: si la compatibilidad no está confirmada, ofrecer a un asesor sin salir de la ficha */}
+                {!isCompatible && (
+                  <button
+                    type="button"
+                    className="btn-secondary compat-banner-action"
+                    onClick={() => openAdvisor({ origin: "product_compat", product: { id: product.id, name: product.name, sku: product.sku } })}
+                  >
+                    Confirmar compatibilidad con un asesor
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -233,9 +249,15 @@ export default function ProductDetailPage() {
             <span className="price-note">IVA incluido</span>
           </div>
 
-          <div className="product-stock">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          <div className={`product-stock stock-${product.stock}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+              {product.stock === "out_of_stock" ? (
+                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" />
+              ) : product.stock === "low_stock" ? (
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+              ) : (
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              )}
             </svg>
             <span>
               {product.stock === "in_stock"
@@ -252,12 +274,20 @@ export default function ProductDetailPage() {
           {product.stock !== "out_of_stock" ? (
             <div className="product-actions">
               <div className="quantity-selector">
-                <button className="qty-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+                <button
+                  type="button"
+                  className="qty-btn"
+                  aria-label="Disminuir cantidad"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
                   -
                 </button>
-                <input type="number" value={quantity} min="1" readOnly />
+                <input type="number" value={quantity} min="1" readOnly aria-label="Cantidad" />
                 <button
+                  type="button"
                   className="qty-btn"
+                  aria-label="Aumentar cantidad"
                   onClick={() => setQuantity((q) => (product.stockQuantity ? Math.min(product.stockQuantity, q + 1) : q + 1))}
                   disabled={!!product.stockQuantity && quantity >= product.stockQuantity}
                 >
@@ -317,22 +347,22 @@ export default function ProductDetailPage() {
 
           <div className="product-benefits">
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
               </svg>
-              <span>Garantía de 12 meses</span>
+              <span>{product.specifications.garantia ? `Garantía: ${product.specifications.garantia}` : "Garantía por confirmar"}</span>
             </div>
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                 <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z" />
               </svg>
-              <span>Envío a todo Colombia</span>
+              <span>Envío gratis desde {formatPrice(FREE_SHIPPING_THRESHOLD)} (ejemplo)</span>
             </div>
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
-              <span>Devolución en 30 días</span>
+              <span>Un asesor confirma tu pedido antes de cobrar</span>
             </div>
           </div>
         </div>
@@ -348,64 +378,19 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="compatibility-content">
-          {/* Estado actual: 3 estados reales */}
-          <div className={`compatibility-status ${isCompatible ? "compatible" : ""} ${isUnknownCompatibility ? "unknown" : ""}`}>
-            <div className="status-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
-                <path
-                  d={
-                    isCompatible
-                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                      : isUnknownCompatibility
-                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm0-4h-2V7h2v8z"
-                      : "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                  }
-                />
-              </svg>
+          {/* Con vehículo activo, el estado ya se explica en el banner de arriba (y su botón de asesor).
+              Sin vehículo no hay nada que evaluar: se invita a elegirlo. */}
+          {!isVehicleSaved && (
+            <div className="compat-prompt">
+              <div>
+                <h3>Verifica la compatibilidad con tu vehículo</h3>
+                <p>Elige tu vehículo para saber si este repuesto le sirve.</p>
+              </div>
+              <button type="button" className="btn-main" onClick={() => setIsModalOpen(true)}>
+                Elegir mi vehículo
+              </button>
             </div>
-            <div className="status-text">
-              <h3>
-                {!isVehicleSaved
-                  ? "Verifica la compatibilidad con tu vehículo"
-                  : isCompatible
-                  ? "Este repuesto es compatible con tu vehículo"
-                  : isUnknownCompatibility
-                  ? "Aún no podemos confirmar la compatibilidad"
-                  : "Este repuesto no es compatible con tu vehículo"}
-              </h3>
-              <p>
-                {!isVehicleSaved && "Guarda tu vehículo para verificar si este repuesto es compatible."}
-                {isVehicleSaved && isCompatible && (
-                  <>
-                    Hemos verificado que el <strong>{product.name} ({product.sku})</strong> es compatible con tu{" "}
-                    <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
-                  </>
-                )}
-                {isVehicleSaved && isUnknownCompatibility && (
-                  <>
-                    Nuestros datos para el <strong>{product.name} ({product.sku})</strong> todavía no confirman ni
-                    descartan que sirva para tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
-                    {reasonText} Te recomendamos confirmarlo con un asesor antes de instalarlo.
-                  </>
-                )}
-                {isVehicleSaved && !isCompatible && !isUnknownCompatibility && (
-                  <>
-                    Hemos verificado que el <strong>{product.name} ({product.sku})</strong> no es compatible con tu{" "}
-                    <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>. {reasonText}
-                  </>
-                )}
-              </p>
-              {isVehicleSaved && !isCompatible && (
-                <button
-                  type="button"
-                  className="link-button advisor-cta"
-                  onClick={() => openAdvisor({ origin: "product_compat", product: { id: product.id, name: product.name, sku: product.sku } })}
-                >
-                  Confirmar compatibilidad con un asesor
-                </button>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Lista de vehículos compatibles */}
           <div className="compatible-vehicles">
@@ -418,20 +403,13 @@ export default function ProductDetailPage() {
             )}
             <div className="vehicles-grid">
               {product.compatibleVehicles.map((v, index) => (
-                <div
-                  key={index}
-                  className={`vehicle-card ${
-                    vehicle?.brand === v.brand && vehicle?.model === v.model ? "highlighted" : ""
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
+                <div key={index} className={`vehicle-card ${entryAppliesToVehicle(v) ? "highlighted" : ""}`}>
                   <span className="vehicle-name">{v.brand} {v.model}</span>
-                  <span className="vehicle-years">{v.years}</span>
-                  {vehicle?.brand === v.brand && vehicle?.model === v.model && (
-                    <span className="your-vehicle-badge">Tu vehículo</span>
-                  )}
+                  <span className="vehicle-years">
+                    {v.years}
+                    {v.engine ? ` · ${v.engine}` : ""}
+                  </span>
+                  {entryAppliesToVehicle(v) && <span className="your-vehicle-badge">Tu vehículo</span>}
                 </div>
               ))}
             </div>
@@ -481,9 +459,8 @@ export default function ProductDetailPage() {
               <h3>{product.name} original KGM</h3>
               <p>{product.description}</p>
               <p>
-                Este repuesto es fabricado con los más altos estándares de calidad para garantizar
-                el óptimo funcionamiento de tu vehículo. Todos nuestros productos cuentan con garantía
-                oficial KGM.
+                Revisa la compatibilidad con tu vehículo antes de comprar. Las condiciones de garantía
+                y devolución están por definir con el equipo comercial.
               </p>
 
               <div className="recommendation-box">
@@ -536,27 +513,14 @@ export default function ProductDetailPage() {
                   </thead>
                   <tbody>
                     {product.compatibleVehicles.map((v, index) => (
-                      <tr
-                        key={index}
-                        className={
-                          vehicle?.brand === v.brand && vehicle?.model === v.model ? "highlight" : ""
-                        }
-                      >
+                      <tr key={index} className={entryAppliesToVehicle(v) ? "highlight" : ""}>
                         <td>{v.brand}</td>
                         <td>{v.model}</td>
                         <td>{v.years}</td>
                         <td>{v.engine || "N/A"}</td>
                         <td>
-                          <span
-                            className={`badge ${
-                              vehicle?.brand === v.brand && vehicle?.model === v.model
-                                ? "compatible"
-                                : ""
-                            }`}
-                          >
-                            {vehicle?.brand === v.brand && vehicle?.model === v.model
-                              ? "Tu vehículo"
-                              : "Compatible"}
+                          <span className={`badge ${entryAppliesToVehicle(v) ? "compatible" : ""}`}>
+                            {entryAppliesToVehicle(v) ? "Tu vehículo" : "Aplica"}
                           </span>
                         </td>
                       </tr>

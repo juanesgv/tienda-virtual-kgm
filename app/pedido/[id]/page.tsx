@@ -68,9 +68,9 @@ export default function OrderConfirmationPage() {
           </svg>
         </div>
         <h1>¡Gracias! Tu pedido quedó registrado</h1>
-        <p>
-          Pedido <strong>{order.id}</strong> · {formatDate(order.createdAt)}
-        </p>
+        {/* El número de pedido es lo que el cliente va a buscar si llama: grande y con cifras de ancho fijo */}
+        <p className="order-confirmation-id">{order.id}</p>
+        <p className="order-confirmation-date">{formatDate(order.createdAt)}</p>
         <p className="order-confirmation-note">
           Te contactaremos a <strong>{order.shippingAddress.email}</strong> para coordinar el pago. También queda
           guardado en tu cuenta.
@@ -82,7 +82,6 @@ export default function OrderConfirmationPage() {
           <section className="account-panel">
             <div className="account-panel-heading">
               <div>
-                <p className="account-panel-kicker">Seguimiento</p>
                 <h2>Estado de tu pedido</h2>
               </div>
             </div>
@@ -92,7 +91,6 @@ export default function OrderConfirmationPage() {
           <section className="account-panel">
             <div className="account-panel-heading">
               <div>
-                <p className="account-panel-kicker">Productos</p>
                 <h2>Resumen del pedido</h2>
               </div>
             </div>
@@ -131,8 +129,7 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="order-breakdown-grid">
               <div><span>Subtotal</span><strong>{formatPrice(order.subtotal)}</strong></div>
-              <div><span>Envío</span><strong>{formatPrice(order.shipping)}</strong></div>
-              <div><span>Descuento</span><strong>{order.discount > 0 ? `-${formatPrice(order.discount)}` : "No aplica"}</strong></div>
+              <div><span>Envío</span><strong>{order.shipping === 0 ? "Gratis" : formatPrice(order.shipping)}</strong></div>
             </div>
             <div className="summary-row total">
               <span>Total</span>
