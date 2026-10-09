@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useVehicle, Vehicle } from "../context/VehicleContext";
 import { useDialog } from "../lib/useDialog";
 
+export type VehicleModalTab = "placa" | "vin" | "linea";
+
 interface VehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Pestaña con la que se abre (por defecto, la placa). */
+  initialTab?: VehicleModalTab;
 }
 
-type Tab = "placa" | "vin" | "linea";
+type Tab = VehicleModalTab;
 
 // Catálogo simulado para la selección guiada (HU-E08-02). No representa el catálogo real de SIISA.
 export const VEHICLE_CATALOG: Record<string, string[]> = {
@@ -21,7 +25,7 @@ const ENGINES = ["1.6L Gasolina", "1.6L Diésel", "2.2L Diésel", "No estoy segu
 
 // HU-E08-01: simulación de búsqueda por placa/VIN. Nunca llama a un servicio real (RUNT/SIISA).
 // Una placa/VIN con un formato claramente inválido simula "no encontrado" para poder mostrar el fallback a manual.
-function simulatePlateLookup(plate: string): Vehicle | null {
+export function simulatePlateLookup(plate: string): Vehicle | null {
   if (plate.trim().length < 6) return null;
   return { plate: plate.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }
@@ -30,7 +34,7 @@ function simulateVinLookup(vin: string): Vehicle | null {
   return { vin: vin.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }
 
-export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
+export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: VehicleModalProps) {
   const { vehicle, vehicles, setVehicle, activateVehicle, removeVehicle } = useVehicle();
   const [activeTab, setActiveTab] = useState<Tab>("placa");
   const [plate, setPlate] = useState("");
@@ -49,7 +53,9 @@ export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
   const availableModels = useMemo(() => (brand ? VEHICLE_CATALOG[brand] ?? [] : []), [brand]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setActiveTab(initialTab);
+    } else {
       // Limpiar el formulario cada vez que se cierra, para no arrastrar datos de una búsqueda anterior
       setPlate("");
       setVin("");
@@ -61,7 +67,7 @@ export default function VehicleModal({ isOpen, onClose }: VehicleModalProps) {
       setLookupError(null);
       setActiveTab("placa");
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   const handlePlateSearch = () => {
     const result = simulatePlateLookup(plate);

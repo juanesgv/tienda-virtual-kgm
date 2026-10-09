@@ -6,14 +6,24 @@ import { categories, products, formatPrice } from "./data/products";
 import { FREE_SHIPPING_THRESHOLD } from "./data/shipping";
 import ProductCard from "./components/ProductCard";
 import CategoryIcon from "./components/CategoryIcon";
-import VehicleModal from "./components/VehicleModal";
+import VehicleModal, { VehicleModalTab } from "./components/VehicleModal";
 import QuickVehicleForm from "./components/QuickVehicleForm";
 import { useVehicle } from "./context/VehicleContext";
 import { useServiceStatus } from "./context/ServiceStatusContext";
 import { useAdvisor } from "./context/AdvisorContext";
 
+// Imagen del banner: MARCADOR (misma fuente que las fotos de producto). Se reemplaza por la imagen real
+// cuando exista; debe ser decorativa y sin texto incrustado (el texto va como HTML).
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1697855532251-8102356a2175?auto=format&fit=crop&w=2000&q=70";
+
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<VehicleModalTab>("placa");
+  const openModal = (tab: VehicleModalTab = "placa") => {
+    setModalTab(tab);
+    setIsModalOpen(true);
+  };
   const { openAdvisor } = useAdvisor();
   const { vehicle, isVehicleSaved } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
@@ -23,9 +33,15 @@ export default function Home() {
 
   return (
     <>
-      {/* Punto de partida: la tarea principal es elegir para qué vehículo se compra */}
-      <section className="home-start" aria-labelledby="home-title">
-        <div className="home-start-grid">
+      {/* Punto de partida: la tarea principal es elegir para qué vehículo se compra.
+          La imagen del banner es decorativa y por ahora un marcador (HERO_IMAGE). */}
+      <section className="home-hero" aria-labelledby="home-title">
+        <div
+          className="home-hero-media"
+          style={{ backgroundImage: `url(${HERO_IMAGE})` }}
+          aria-hidden="true"
+        />
+        <div className="home-hero-inner">
           <div className="vehicle-panel">
             <h1 id="home-title">¿Para qué vehículo compras?</h1>
             <p className="vehicle-panel-lede">
@@ -46,27 +62,32 @@ export default function Home() {
                   <Link href="/repuestos?compatible=true" className="btn-main">
                     Ver repuestos compatibles
                   </Link>
-                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(true)}>
+                  <button type="button" className="btn-secondary" onClick={() => openModal()}>
                     Cambiar vehículo
                   </button>
                 </div>
               </>
             ) : (
-              <QuickVehicleForm onOpenModal={() => setIsModalOpen(true)} />
+              <QuickVehicleForm onOpenModal={openModal} />
             )}
           </div>
+        </div>
+      </section>
 
-          <aside className="help-card" aria-labelledby="help-title">
+      {/* HU-E54-01: ayuda de un asesor visible desde la Home, sin competir con el selector del banner */}
+      <section className="home-help" aria-labelledby="help-title">
+        <aside className="help-card">
+          <div className="help-card-text">
             <h2 id="help-title">¿No sabes qué repuesto necesitas?</h2>
             <p>
               Cuéntanos qué le pasa a tu vehículo y un asesor te orienta. Tu búsqueda y tu vehículo viajan con la
               solicitud para que no repitas nada.
             </p>
-            <button type="button" className="btn-secondary" onClick={() => openAdvisor({ origin: "home" })}>
-              Hablar con un asesor
-            </button>
-          </aside>
-        </div>
+          </div>
+          <button type="button" className="btn-secondary" onClick={() => openAdvisor({ origin: "home" })}>
+            Hablar con un asesor
+          </button>
+        </aside>
       </section>
 
       {/* Categorías */}
@@ -160,7 +181,7 @@ export default function Home() {
         </div>
       </section>
 
-      <VehicleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <VehicleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialTab={modalTab} />
     </>
   );
 }

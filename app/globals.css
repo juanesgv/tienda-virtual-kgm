@@ -1084,16 +1084,53 @@ img {
    INICIO: PUNTO DE PARTIDA
    ======================================== */
 
-.home-start {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-6) var(--space-6);
+/* Banner de la portada: una sola imagen (marcador por ahora) y, encima, el panel blanco del vehículo.
+   El panel es sólido, así que su contraste no depende de la imagen; la imagen es decorativa. */
+.home-hero {
+  position: relative;
+  background: var(--color-gray-200);
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
-.home-start-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+.home-hero-media {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center right;
+}
+
+.home-hero-inner {
+  position: relative;
+  max-width: 1400px;
+  min-height: 420px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+  display: flex;
+  align-items: center;
+}
+
+.home-hero .vehicle-panel {
+  width: 100%;
+  max-width: 560px;
+}
+
+.home-help {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) 0;
+}
+
+.home-help .help-card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-6);
+  padding: var(--space-6) var(--space-8);
+}
+
+.home-help .help-card-text {
+  display: grid;
+  gap: var(--space-1);
 }
 
 .vehicle-panel,
@@ -1156,6 +1193,49 @@ img {
   margin-bottom: 0;
 }
 
+/* Placa: campo y botón en una fila; el botón se alinea con la base del campo */
+.quick-plate-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.quick-plate-row .form-group {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.quick-plate-row .form-group input {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quick-plate-row .form-group input::placeholder {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.quick-vehicle-hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
+}
+
+.quick-vehicle-form .link-button {
+  align-self: flex-start;
+}
+
+@media (max-width: 560px) {
+  .quick-plate-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .quick-vehicle-form .btn-main:disabled {
   background: var(--color-gray-300);
   color: var(--color-gray-700);
@@ -1191,12 +1271,30 @@ img {
 }
 
 @media (max-width: 900px) {
-  .home-start {
+  /* En móvil la imagen pasa a una banda baja sobre el panel para que el selector siga en la primera pantalla */
+  .home-hero-media {
+    position: relative;
+    inset: auto;
+    height: 88px;
+  }
+
+  .home-hero-inner {
+    min-height: 0;
+    padding: var(--space-4);
+  }
+
+  .home-hero .vehicle-panel {
+    max-width: none;
+  }
+
+  .home-help {
     padding: var(--space-4) var(--space-4) 0;
   }
 
-  .home-start-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .home-help .help-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-6);
   }
 
   .vehicle-panel,
