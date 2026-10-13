@@ -29,7 +29,7 @@ export function simulatePlateLookup(plate: string): Vehicle | null {
   if (plate.trim().length < 6) return null;
   return { plate: plate.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }
-function simulateVinLookup(vin: string): Vehicle | null {
+export function simulateVinLookup(vin: string): Vehicle | null {
   if (vin.trim().length < 17) return null;
   return { vin: vin.trim(), brand: "KGM", model: "Tivoli", year: 2023, engine: "1.6L Gasolina" };
 }

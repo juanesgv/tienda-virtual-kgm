@@ -4,18 +4,26 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVehicle, Vehicle } from "../context/VehicleContext";
-import { simulatePlateLookup, VEHICLE_CATALOG, VehicleModalTab, YEARS } from "./VehicleModal";
+import { simulatePlateLookup, simulateVinLookup, VEHICLE_CATALOG, YEARS } from "./VehicleModal";
 
-type Mode = "placa" | "manual";
+type Method = "placa" | "modelo" | "vin";
 
-// Identificador rápido de la portada. La placa es el primer camino (HU-E01-02 / HU-E08-01); si el cliente no la
-// tiene a mano o no se reconoce, pasa a marca / modelo / año (HU-E08-02). El VIN y el garaje siguen en VehicleModal.
-// La búsqueda por placa es simulada: nunca llama a RUNT ni a SIISA. Sin motor, la compatibilidad queda "sin confirmar".
-export default function QuickVehicleForm({ onOpenModal }: { onOpenModal: (tab?: VehicleModalTab) => void }) {
+const METHODS: { id: Method; label: string }[] = [
+  { id: "placa", label: "Placa" },
+  { id: "modelo", label: "Modelo" },
+  { id: "vin", label: "VIN" },
+];
+
+// Identificador rápido de la portada (HU-E01-02 / HU-E08-01 / HU-E08-02): el cliente escribe o elige, sin pasar por
+// fotos ni por el modal. La placa es el método por defecto; el modelo (marca, modelo, año) es para quien no la tiene
+// a mano; el VIN está disponible pero es el de menor uso (17 caracteres). Placa y VIN son búsquedas SIMULADAS:
+// nunca llaman a RUNT ni a SIISA. Sin motor, la compatibilidad queda "sin confirmar".
+export default function QuickVehicleForm() {
   const router = useRouter();
   const { setVehicle } = useVehicle();
-  const [mode, setMode] = useState<Mode>("placa");
+  const [method, setMethod] = useState<Method>("placa");
   const [plate, setPlate] = useState("");
+  const [vin, setVin] = useState("");
   const [pending, setPending] = useState<Vehicle | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [brand, setBrand] = useState("");
@@ -25,15 +33,25 @@ export default function QuickVehicleForm({ onOpenModal }: { onOpenModal: (tab?: 
 
   const goToCompatible = () => router.push("/repuestos?compatible=true");
 
-  const searchPlate = (e: React.FormEvent) => {
+  const changeMethod = (next: Method) => {
+    setMethod(next);
+    setPending(null);
+    setLookupError(null);
+  };
+
+  const search = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = simulatePlateLookup(plate);
+    const result = method === "vin" ? simulateVinLookup(vin) : simulatePlateLookup(plate);
     if (result) {
       setLookupError(null);
       setPending(result);
     } else {
       setPending(null);
-      setLookupError("No pudimos identificar un vehículo con esa placa. Revisa que tenga 6 caracteres.");
+      setLookupError(
+        method === "vin"
+          ? "El VIN debe tener 17 caracteres. Revísalo o busca por placa o por modelo."
+          : "No pudimos identificar un vehículo con esa placa. Revisa que tenga 6 caracteres o busca por modelo."
+      );
     }
   };
 
@@ -43,96 +61,32 @@ export default function QuickVehicleForm({ onOpenModal }: { onOpenModal: (tab?: 
     goToCompatible();
   };
 
-  const switchToManual = () => {
-    setPending(null);
-    setLookupError(null);
-    setMode("manual");
-  };
-
-  const saveManual = (e: React.FormEvent) => {
+  const saveModel = (e: React.FormEvent) => {
     e.preventDefault();
     if (!brand || !model || !year) return;
     setVehicle({ brand, model, year: parseInt(year), approximateMatch: true });
     goToCompatible();
   };
 
-  // El VIN sigue disponible, pero como camino de menor uso (número largo): enlace discreto que abre VehicleModal
-  const vinLink = (
-    <button type="button" className="link-button" onClick={() => onOpenModal("vin")}>
-      Buscar por VIN
-    </button>
+  const switcher = (
+    <div className="id-method" role="group" aria-label="Cómo quieres identificar tu vehículo">
+      <span className="id-method-label">Buscar por</span>
+      {METHODS.map((m) => (
+        <button
+          key={m.id}
+          type="button"
+          className={`id-method-btn ${method === m.id ? "active" : ""}`}
+          aria-pressed={method === m.id}
+          onClick={() => changeMethod(m.id)}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
   );
 
-  if (mode === "manual") {
-    return (
-      <form className="quick-vehicle-form" onSubmit={saveManual}>
-        <div className="quick-vehicle-fields">
-          <div className="form-group">
-            <label htmlFor="qv-brand">Marca</label>
-            <select
-              id="qv-brand"
-              value={brand}
-              onChange={(e) => {
-                setBrand(e.target.value);
-                setModel("");
-                setYear("");
-              }}
-            >
-              <option value="">Elige</option>
-              {Object.keys(VEHICLE_CATALOG).map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="qv-model">Modelo</label>
-            <select
-              id="qv-model"
-              value={model}
-              onChange={(e) => {
-                setModel(e.target.value);
-                setYear("");
-              }}
-              disabled={!brand}
-            >
-              <option value="">Elige</option>
-              {models.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="qv-year">Año</label>
-            <select id="qv-year" value={year} onChange={(e) => setYear(e.target.value)} disabled={!model}>
-              <option value="">Elige</option>
-              {YEARS.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="vehicle-panel-actions">
-          <button type="submit" className="btn-main" disabled={!brand || !model || !year}>
-            Ver repuestos compatibles
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => setMode("placa")}>
-            Buscar por placa
-          </button>
-        </div>
-        <p className="quick-vehicle-hint">Sin el motor, la compatibilidad de algunos repuestos quedará por confirmar.</p>
-        {vinLink}
-      </form>
-    );
-  }
-
-  // Resultado de la búsqueda por placa: se confirma antes de guardar (HU-E08-01)
-  if (pending) {
+  // Resultado de la búsqueda por placa o VIN: se confirma antes de guardar (HU-E08-01)
+  if (pending && method !== "modelo") {
     return (
       <div className="quick-vehicle-form">
         <div className="vehicle-confirm-card">
@@ -143,13 +97,14 @@ export default function QuickVehicleForm({ onOpenModal }: { onOpenModal: (tab?: 
               {pending.brand} {pending.model} {pending.year}
             </strong>
             {pending.plate && <span>Placa {pending.plate}</span>}
+            {pending.vin && <span>VIN {pending.vin}</span>}
           </div>
           <div className="vehicle-confirm-actions">
             <button type="button" className="btn-main" onClick={confirmPending}>
               Sí, es mi vehículo
             </button>
-            <button type="button" className="link-button" onClick={switchToManual}>
-              No es mi vehículo, elegirlo manualmente
+            <button type="button" className="link-button" onClick={() => changeMethod("modelo")}>
+              No es mi vehículo, buscarlo por modelo
             </button>
           </div>
         </div>
@@ -159,53 +114,132 @@ export default function QuickVehicleForm({ onOpenModal }: { onOpenModal: (tab?: 
 
   return (
     <div className="quick-vehicle-form">
-      <form onSubmit={searchPlate} noValidate>
-        <div className="quick-plate-row">
-          <div className="form-group">
-            <label htmlFor="qv-plate">Placa de tu vehículo</label>
-            <input
-              id="qv-plate"
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              maxLength={6}
-              placeholder="Ej: ABC123"
-              value={plate}
-              aria-describedby={lookupError ? "qv-plate-error" : "qv-plate-hint"}
-              aria-invalid={lookupError ? true : undefined}
-              onChange={(e) => {
-                setPlate(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""));
-                setLookupError(null);
-              }}
-            />
+      {switcher}
+
+      {method === "modelo" ? (
+        <form onSubmit={saveModel} className="quick-vehicle-form">
+          <div className="quick-vehicle-fields">
+            <div className="form-group">
+              <label htmlFor="qv-brand">Marca</label>
+              <select
+                id="qv-brand"
+                value={brand}
+                onChange={(e) => {
+                  setBrand(e.target.value);
+                  setModel("");
+                  setYear("");
+                }}
+              >
+                <option value="">Elige</option>
+                {Object.keys(VEHICLE_CATALOG).map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="qv-model">Modelo</label>
+              <select
+                id="qv-model"
+                value={model}
+                onChange={(e) => {
+                  setModel(e.target.value);
+                  setYear("");
+                }}
+                disabled={!brand}
+              >
+                <option value="">Elige</option>
+                {models.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="qv-year">Año</label>
+              <select id="qv-year" value={year} onChange={(e) => setYear(e.target.value)} disabled={!model}>
+                <option value="">Elige</option>
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <button type="submit" className="btn-main">
-            Buscar por placa
-          </button>
-        </div>
-        {lookupError ? (
-          <p id="qv-plate-error" className="field-error" role="alert">
-            {lookupError}
-          </p>
-        ) : (
-          <p id="qv-plate-hint" className="quick-vehicle-hint">
-            Con la placa te mostramos primero los repuestos que le sirven.
-          </p>
-        )}
-      </form>
+          <div className="vehicle-panel-actions">
+            <button type="submit" className="btn-main" disabled={!brand || !model || !year}>
+              Ver repuestos compatibles
+            </button>
+          </div>
+          <p className="quick-vehicle-hint">Sin el motor, la compatibilidad de algunos repuestos quedará por confirmar.</p>
+        </form>
+      ) : (
+        <form onSubmit={search} noValidate>
+          <div className="quick-plate-row">
+            <div className="form-group">
+              <label htmlFor={method === "vin" ? "qv-vin" : "qv-plate"}>
+                {method === "vin" ? "VIN de tu vehículo (17 caracteres)" : "Placa de tu vehículo"}
+              </label>
+              {method === "vin" ? (
+                <input
+                  id="qv-vin"
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  maxLength={17}
+                  placeholder="Ej: KPTA0A1KSKP123456"
+                  value={vin}
+                  aria-describedby={lookupError ? "qv-error" : "qv-hint"}
+                  aria-invalid={lookupError ? true : undefined}
+                  onChange={(e) => {
+                    setVin(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+                    setLookupError(null);
+                  }}
+                />
+              ) : (
+                <input
+                  id="qv-plate"
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  maxLength={6}
+                  placeholder="Ej: ABC123"
+                  value={plate}
+                  aria-describedby={lookupError ? "qv-error" : "qv-hint"}
+                  aria-invalid={lookupError ? true : undefined}
+                  onChange={(e) => {
+                    setPlate(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+                    setLookupError(null);
+                  }}
+                />
+              )}
+            </div>
+            <button type="submit" className="btn-main">
+              {method === "vin" ? "Buscar por VIN" : "Buscar por placa"}
+            </button>
+          </div>
+          {lookupError ? (
+            <p id="qv-error" className="field-error" role="alert">
+              {lookupError}
+            </p>
+          ) : (
+            <p id="qv-hint" className="quick-vehicle-hint">
+              {method === "vin"
+                ? "El VIN está en la tarjeta de propiedad o en el parabrisas. Si no lo tienes, busca por placa o por modelo."
+                : "Con la placa te mostramos primero los repuestos que le sirven."}
+            </p>
+          )}
+        </form>
+      )}
 
-      <div className="vehicle-panel-actions">
-        <button type="button" className="btn-secondary" onClick={switchToManual}>
-          Buscar por modelo
-        </button>
-        <Link href="/repuestos" className="btn-secondary">
-          Ver todos los repuestos
-        </Link>
-      </div>
-
-      {vinLink}
+      <Link href="/repuestos" className="link-button">
+        Ver todos los repuestos sin elegir vehículo
+      </Link>
     </div>
   );
 }

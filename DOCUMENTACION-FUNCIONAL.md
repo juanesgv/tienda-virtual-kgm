@@ -89,6 +89,8 @@ Criterios de aceptacion:
 - Existe un buscador global accesible desde la cabecera.
 - El sistema redirige a una pagina de resultados.
 - Los resultados muestran coincidencias relevantes del catalogo.
+- Si la busqueda no tiene resultados, el sistema sugiere terminos mas generales, el formato "pieza y modelo" (por ejemplo, "Disco de freno Tivoli") y categorias, y ofrece pedirle a un asesor que consiga el repuesto (con la busqueda y el vehiculo como contexto).
+- Toda busqueda sin resultados queda registrada sin pedir datos al cliente (termino, fecha y vehiculo activo, si lo hay), para saber que repuestos faltan en el catalogo (HU-E13-04). Esa demanda se consulta agrupada por termino; en el prototipo, en la pantalla de demo del registro de solicitudes.
 
 **HU-004**
 
@@ -96,7 +98,7 @@ Como comprador, quiero guardar mi vehiculo, para saber si los repuestos aplican 
 
 Criterios de aceptacion:
 
-- El usuario puede registrar su vehiculo por placa, por VIN o eligiendo marca, modelo y anio; el motor es opcional. Las busquedas por placa y VIN piden confirmar el resultado antes de guardarlo y, si fallan, ofrecen la seleccion manual. En el prototipo estas busquedas son simuladas (sin RUNT ni SIISA).
+- El usuario identifica su vehiculo digitando o eligiendo, sin fotos de documentos: placa (metodo por defecto), modelo (marca, modelo y anio) o VIN (disponible, de menor uso por su longitud). Los tres estan en la portada, sin pasar por una ventana aparte; el motor es opcional. Las busquedas por placa y VIN piden confirmar el resultado antes de guardarlo y, si fallan, ofrecen la seleccion manual. En el prototipo estas busquedas son simuladas (sin RUNT ni SIISA).
 - Si no se indica el motor, el vehiculo queda marcado como "version sin confirmar".
 - El usuario puede guardar varios vehiculos en "Mi garaje", elegir cual esta activo, cambiar de vehiculo y quitar el vehiculo activo sin borrarlo del garaje.
 - El garaje queda persistido para visitas posteriores.
@@ -145,7 +147,9 @@ Criterios de aceptacion:
 
 - Si existe vehiculo activo, el sistema informa si el repuesto es compatible, no compatible o sin confirmar, con icono y texto (nunca solo con color).
 - Si el repuesto no es compatible, se explica por que y se ofrece consultar a un asesor o ver alternativas que si sirvan.
-- Se muestra una lista de vehiculos compatibles con el producto.
+- Se muestra siempre, con o sin vehiculo activo, para que vehiculos sirve el repuesto: primero en una frase en lenguaje claro (marca, modelos y rangos de anios) y despues en una tabla de vehiculos compatibles que se puede filtrar por marca, modelo, anio y motor. La frase se genera a partir de los mismos datos de la tabla.
+- Si ningun vehiculo cumple los filtros, se indica que eso no significa que el repuesto no sirva y se permite quitar los filtros.
+- Con vehiculo activo, la fila que de verdad aplica (modelo, anio y motor) aparece primero y marcada.
 - El usuario puede cambiar su vehiculo para volver a validar compatibilidad.
 
 Prioridad: Alta
@@ -182,6 +186,7 @@ Criterios de aceptacion:
 - Se muestra subtotal.
 - Se muestra valor del envio o estado de envio gratis.
 - Se muestra el total final a pagar (subtotal mas envio).
+- Se muestra la entrega estimada con fechas (por ejemplo, "entre el miercoles 14 y el viernes 16 de octubre"), en la tarjeta del producto, la ficha, el carrito y la confirmacion del pedido. En el prototipo es un valor de ejemplo (3 a 5 dias habiles, sin festivos) hasta que exista el contrato con la transportadora (HU-E18-01) y se decida D3.
 
 **HU-010**
 
@@ -192,6 +197,8 @@ Criterios de aceptacion:
 - El formulario solicita nombre, correo, telefono, direccion, ciudad y departamento.
 - El formulario permite notas adicionales.
 - El pedido no puede confirmarse sin los datos obligatorios.
+- Antes de confirmar, y en la confirmacion del pedido, se explica que pasa despues: un asesor revisa la compatibilidad, se coordina el pago (no se cobra antes) y se avisa el despacho con la fecha estimada. Es un proceso propuesto, por validar con Posventa.
+- Garantia y devoluciones no se afirman con plazos propios mientras la epica E19 no tenga politica definida: la tienda muestra un solo texto ("por definir con Comercial") en la ficha, el carrito y la confirmacion.
 
 Prioridad: Alta
 

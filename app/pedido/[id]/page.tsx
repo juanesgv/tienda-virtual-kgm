@@ -6,7 +6,9 @@ import { useParams } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 import { useCart } from "../../context/CartContext";
 import { formatPrice } from "../../data/products";
+import { getEstimatedDelivery } from "../../data/delivery";
 import OrderStatusTimeline from "../../components/OrderStatusTimeline";
+import NextSteps from "../../components/NextSteps";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short" }).format(new Date(value));
@@ -75,6 +77,11 @@ export default function OrderConfirmationPage() {
           Te contactaremos a <strong>{order.shippingAddress.email}</strong> para coordinar el pago. También queda
           guardado en tu cuenta.
         </p>
+        {/* HU-E11-02/E18: se calcula desde la fecha del pedido, no desde hoy (valor de ejemplo) */}
+        <p className="order-confirmation-note">
+          Entrega estimada: {getEstimatedDelivery(new Date(order.createdAt)).long} (valor de ejemplo, depende de la
+          transportadora).
+        </p>
       </div>
 
       <div className="order-confirmation-layout">
@@ -86,6 +93,10 @@ export default function OrderConfirmationPage() {
               </div>
             </div>
             <OrderStatusTimeline status={order.status} orderId={order.id} />
+          </section>
+
+          <section className="account-panel">
+            <NextSteps hasVehicle={order.items.some((item) => !!item.vehicle)} />
           </section>
 
           <section className="account-panel">

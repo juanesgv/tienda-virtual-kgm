@@ -11,11 +11,14 @@ import VehicleModal from "../../components/VehicleModal";
 import ProductCard from "../../components/ProductCard";
 import IncompatibleAddModal from "../../components/IncompatibleAddModal";
 import ProductComplements from "../../components/ProductComplements";
+import VehicleApplicability from "../../components/VehicleApplicability";
+import { useEstimatedDelivery } from "../../lib/useEstimatedDelivery";
 import ServiceUnavailable from "../../components/ServiceUnavailable";
 import { products } from "../../data/products";
 import { useServiceStatus } from "../../context/ServiceStatusContext";
 import { useAdvisor } from "../../context/AdvisorContext";
 import { FREE_SHIPPING_THRESHOLD } from "../../data/shipping";
+import { WARRANTY_AND_RETURNS_SUMMARY, WARRANTY_AND_RETURNS_VALUE } from "../../data/policies";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -24,6 +27,7 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { isAuthenticated } = useUser();
   const { isInventoryDown } = useServiceStatus();
+  const delivery = useEstimatedDelivery();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("descripcion");
   const [quantity, setQuantity] = useState(1);
@@ -261,7 +265,7 @@ export default function ProductDetailPage() {
             </svg>
             <span>
               {product.stock === "in_stock"
-                ? "En stock - Disponible para envío inmediato"
+                ? "En stock - Disponible"
                 : product.stock === "low_stock"
                 ? product.stockQuantity
                   ? `Pocos disponibles - quedan ${product.stockQuantity} unidades`
@@ -269,6 +273,14 @@ export default function ProductDetailPage() {
                 : "Agotado"}
             </span>
           </div>
+
+          {/* HU-E11-02/E18: entrega estimada con fechas, visible antes de agregar al carrito (valor de ejemplo) */}
+          {product.stock !== "out_of_stock" && delivery && (
+            <p className="product-delivery-detail">
+              <strong>Entrega estimada:</strong> {delivery.long}.{" "}
+              <span className="simulated-badge">Valor de ejemplo · depende de la transportadora (E18)</span>
+            </p>
+          )}
 
           {/* HU-E06-01/E06-04/E13-01/E13-02: sin stock no se puede agregar; la cantidad no puede superar lo disponible */}
           {product.stock !== "out_of_stock" ? (
@@ -350,7 +362,7 @@ export default function ProductDetailPage() {
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
               </svg>
-              <span>{product.specifications.garantia ? `Garantía: ${product.specifications.garantia}` : "Garantía por confirmar"}</span>
+              <span>{WARRANTY_AND_RETURNS_SUMMARY}</span>
             </div>
             <div className="benefit">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
@@ -392,27 +404,19 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Lista de vehículos compatibles */}
+          {/* HU-E06-03: aplicabilidad siempre visible (con o sin vehículo): en lenguaje claro y como tabla filtrable */}
           <div className="compatible-vehicles">
-            <h3>Vehículos compatibles con este repuesto</h3>
-            {product.compatibleVehicles.length === 0 && (
-              <p className="compatibility-data-note">
-                Todavía no hay información de aplicabilidad cargada para este repuesto. Revisa la descripción o
-                confírmalo con un asesor antes de comprarlo.
-              </p>
+            {product.compatibleVehicles.length === 0 ? (
+              <>
+                <h3>Vehículos compatibles con este repuesto</h3>
+                <p className="compatibility-data-note">
+                  Todavía no hay información de aplicabilidad cargada para este repuesto. Revisa la descripción o
+                  confírmalo con un asesor antes de comprarlo.
+                </p>
+              </>
+            ) : (
+              <VehicleApplicability vehicles={product.compatibleVehicles} appliesToVehicle={entryAppliesToVehicle} />
             )}
-            <div className="vehicles-grid">
-              {product.compatibleVehicles.map((v, index) => (
-                <div key={index} className={`vehicle-card ${entryAppliesToVehicle(v) ? "highlighted" : ""}`}>
-                  <span className="vehicle-name">{v.brand} {v.model}</span>
-                  <span className="vehicle-years">
-                    {v.years}
-                    {v.engine ? ` · ${v.engine}` : ""}
-                  </span>
-                  {entryAppliesToVehicle(v) && <span className="your-vehicle-badge">Tu vehículo</span>}
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Verificar otro vehículo */}
@@ -444,12 +448,6 @@ export default function ProductDetailPage() {
             onClick={() => setActiveTab("especificaciones")}
           >
             Especificaciones
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "compatibilidad" ? "active" : ""}`}
-            onClick={() => setActiveTab("compatibilidad")}
-          >
-            Compatibilidad completa
           </button>
         </div>
 
@@ -483,7 +481,8 @@ export default function ProductDetailPage() {
                 {Object.entries(product.specifications).map(([key, value]) => (
                   <tr key={key}>
                     <th>{key.charAt(0).toUpperCase() + key.slice(1)}</th>
-                    <td>{value}</td>
+                    {/* A4: la garantía no se dice por producto; sale de la única fuente de política (E19, por definir) */}
+                    <td>{key === "garantia" ? WARRANTY_AND_RETURNS_VALUE : value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -491,46 +490,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {activeTab === "compatibilidad" && (
-          <div className="tab-panel active">
-            <div className="full-compatibility">
-              <h4>Lista completa de vehículos compatibles</h4>
-              {product.compatibleVehicles.length === 0 && (
-                <p className="compatibility-data-note">
-                  Todavía no hay información de aplicabilidad cargada para este repuesto.
-                </p>
-              )}
-              <div className="compatibility-table-wrapper">
-                <table className="compatibility-table">
-                  <thead>
-                    <tr>
-                      <th>Marca</th>
-                      <th>Modelo</th>
-                      <th>Años</th>
-                      <th>Motor</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {product.compatibleVehicles.map((v, index) => (
-                      <tr key={index} className={entryAppliesToVehicle(v) ? "highlight" : ""}>
-                        <td>{v.brand}</td>
-                        <td>{v.model}</td>
-                        <td>{v.years}</td>
-                        <td>{v.engine || "N/A"}</td>
-                        <td>
-                          <span className={`badge ${entryAppliesToVehicle(v) ? "compatible" : ""}`}>
-                            {entryAppliesToVehicle(v) ? "Tu vehículo" : "Aplica"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* HU-E07-04: si el producto no es compatible, priorizar alternativas que sí lo sean.

@@ -11,6 +11,9 @@ import { getSearchSuggestions } from "../data/products";
 import VehicleModal from "./VehicleModal";
 import CartDrawer from "./CartDrawer";
 import { BrandLogo } from "./BrandLogo";
+import { useRotatingPlaceholder } from "../lib/useRotatingPlaceholder";
+
+const SEARCH_EXAMPLES = ["Disco de freno Tivoli", "Filtro de aceite Korando", "Amortiguador Rexton", "Batería 12V"];
 
 const NAV_CATEGORIES = [
   { id: "frenos", label: "Frenos" },
@@ -63,6 +66,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [searchFocused, setSearchFocused] = useState(false);
   const { vehicle, isVehicleSaved, clearVehicle } = useVehicle();
   const { getItemCount } = useCart();
   const { currentUser, isAuthenticated } = useUser();
@@ -72,6 +76,13 @@ export function Header() {
   const suggestions = useMemo(
     () => (isInventoryDown ? [] : getSearchSuggestions(searchQuery)),
     [searchQuery, isInventoryDown]
+  );
+
+  // Ejemplos de búsqueda "pieza + modelo" que el buscador resuelve con el catálogo actual
+  const searchPlaceholder = useRotatingPlaceholder(
+    "Buscar repuestos por nombre, referencia o categoría...",
+    SEARCH_EXAMPLES,
+    searchFocused || searchQuery.length > 0
   );
 
   const goToSuggestion = (href: string) => {
@@ -108,14 +119,20 @@ export function Header() {
             }}>
               <input
                 type="text"
-                placeholder="Buscar repuestos por nombre, referencia o categoría..."
+                placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setActiveSuggestion(-1);
                 }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onFocus={() => {
+                  setSearchFocused(true);
+                  setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  setSearchFocused(false);
+                  setTimeout(() => setShowSuggestions(false), 150);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") {
                     setShowSuggestions(false);

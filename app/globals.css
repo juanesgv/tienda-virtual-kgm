@@ -1193,6 +1193,41 @@ img {
   margin-bottom: 0;
 }
 
+/* Selector de método de identificación: placa (por defecto), modelo, VIN */
+.id-method {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.id-method-label {
+  margin-right: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
+}
+
+.id-method-btn {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-gray-800);
+}
+
+.id-method-btn:hover {
+  background: var(--color-gray-100);
+}
+
+.id-method-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
+}
+
 /* Placa: campo y botón en una fila; el botón se alinea con la base del campo */
 .quick-plate-row {
   display: flex;
@@ -1211,6 +1246,12 @@ img {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+/* El VIN tiene 17 caracteres: letra más pequeña y menos espaciado para que quepa completo */
+.quick-plate-row .form-group input#qv-vin {
+  font-size: var(--text-base);
+  letter-spacing: 0.05em;
 }
 
 .quick-plate-row .form-group input::placeholder {
@@ -1577,6 +1618,91 @@ img {
 
 .product-name:hover {
   color: var(--color-primary);
+}
+
+/* Qué pasa después de confirmar (carrito y confirmación del pedido) */
+.next-steps {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.next-steps h4 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.next-steps ol {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--color-gray-700);
+  line-height: 1.5;
+}
+
+.next-steps-policy {
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
+}
+
+.next-steps .simulated-badge {
+  justify-self: start;
+}
+
+.account-panel > .next-steps {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Estado vacío de búsqueda: captura de demanda ("lo conseguimos por ti") */
+.demand-capture {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.demand-capture h4 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.demand-capture p {
+  max-width: 52ch;
+  font-size: var(--text-sm);
+  color: var(--color-gray-700);
+}
+
+.demand-capture .demand-note {
+  color: var(--color-gray-600);
+}
+
+.product-delivery {
+  font-size: var(--text-xs);
+  color: var(--color-gray-600);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-delivery-detail {
+  font-size: var(--text-sm);
+  color: var(--color-gray-700);
+  line-height: 1.6;
+}
+
+.product-delivery-detail .simulated-badge {
+  margin: 0 0 0 var(--space-1);
+  vertical-align: middle;
 }
 
 .product-meta {
@@ -2678,6 +2804,59 @@ img {
   font-size: var(--text-base);
   font-weight: 600;
   margin-bottom: var(--space-4);
+}
+
+/* Aplicación en lenguaje claro + tabla filtrable de vehículos compatibles */
+.applicability {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.application-text {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+}
+
+.application-text h3,
+.applicability-table-block h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.application-text p {
+  max-width: 75ch;
+  line-height: 1.6;
+  color: var(--color-gray-800);
+}
+
+.application-text .application-source {
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
+}
+
+.applicability-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.applicability-filters .form-group {
+  margin-bottom: 0;
+}
+
+.applicability-count {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
 }
 
 .vehicles-grid {

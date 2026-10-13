@@ -10,6 +10,7 @@ import ServiceUnavailable from "../components/ServiceUnavailable";
 import { useVehicle } from "../context/VehicleContext";
 import { useServiceStatus } from "../context/ServiceStatusContext";
 import { useAdvisor } from "../context/AdvisorContext";
+import { logUnmetSearch } from "../lib/unmetDemand";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -73,6 +74,13 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setForceOriginalTerm(false);
   }, [query]);
+
+  // HU-E13-04: una búsqueda sin ningún resultado queda registrada sin pedir datos (analítica agregada de demanda)
+  const noResultsAtAll = !!query.trim() && searchResults.length === 0 && !isInventoryDown;
+  const vehicleLabel = vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : undefined;
+  useEffect(() => {
+    if (noResultsAtAll) logUnmetSearch(query, vehicleLabel);
+  }, [noResultsAtAll, query, vehicleLabel]);
 
   // HU-E02-04: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página).
   // La épica E40 no tiene historias redactadas en Notion; el criterio concreto vive en HU-E02-04.
@@ -245,7 +253,10 @@ export default function SearchPage() {
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
               </svg>
               <h3>No se encontraron resultados</h3>
-              <p>Intenta con otros términos de búsqueda o explora por categorías:</p>
+              <p>
+                Prueba con un término más general (por ejemplo, “amortiguador”) o con la pieza y el modelo (por
+                ejemplo, “Disco de freno Tivoli”). También puedes explorar por categorías:
+              </p>
               <div className="suggested-categories">
                 {categories.slice(0, 4).map((cat) => (
                   <Link key={cat.id} href={`/repuestos?categoria=${cat.id}`} className="suggested-category">
@@ -259,14 +270,22 @@ export default function SearchPage() {
 
               {/* HU-E04-05 / E54: contactar a un asesor como último recurso, con búsqueda y vehículo como contexto.
                   El canal real sigue por definir: el flujo es una simulación. */}
-              <div className="advisor-fallback">
+              <div className="advisor-fallback demand-capture">
+                <h4>¿No lo encuentras? ¡Lo conseguimos por ti!</h4>
+                <p>
+                  Cuéntanos qué repuesto buscas y para qué vehículo: un asesor te responde con una opción o una
+                  cotización.
+                </p>
                 <button
                   type="button"
-                  className="link-button"
+                  className="btn-secondary"
                   onClick={() => openAdvisor({ origin: "empty_search", searchQuery: query })}
                 >
-                  ¿Sigues sin encontrarlo? Habla con un asesor
+                  Pedir que lo consigan
                 </button>
+                <p className="demand-note">
+                  Guardamos lo que buscaste, sin tus datos personales, para saber qué repuestos faltan en el catálogo.
+                </p>
               </div>
             </div>
           )}

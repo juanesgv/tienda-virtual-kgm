@@ -6,7 +6,7 @@ import { categories, products, formatPrice } from "./data/products";
 import { FREE_SHIPPING_THRESHOLD } from "./data/shipping";
 import ProductCard from "./components/ProductCard";
 import CategoryIcon from "./components/CategoryIcon";
-import VehicleModal, { VehicleModalTab } from "./components/VehicleModal";
+import VehicleModal from "./components/VehicleModal";
 import QuickVehicleForm from "./components/QuickVehicleForm";
 import { useVehicle } from "./context/VehicleContext";
 import { useServiceStatus } from "./context/ServiceStatusContext";
@@ -19,11 +19,6 @@ const HERO_IMAGE =
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<VehicleModalTab>("placa");
-  const openModal = (tab: VehicleModalTab = "placa") => {
-    setModalTab(tab);
-    setIsModalOpen(true);
-  };
   const { openAdvisor } = useAdvisor();
   const { vehicle, isVehicleSaved } = useVehicle();
   const { isInventoryDown } = useServiceStatus();
@@ -62,13 +57,13 @@ export default function Home() {
                   <Link href="/repuestos?compatible=true" className="btn-main">
                     Ver repuestos compatibles
                   </Link>
-                  <button type="button" className="btn-secondary" onClick={() => openModal()}>
+                  <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(true)}>
                     Cambiar vehículo
                   </button>
                 </div>
               </>
             ) : (
-              <QuickVehicleForm onOpenModal={openModal} />
+              <QuickVehicleForm />
             )}
           </div>
         </div>
@@ -181,7 +176,7 @@ export default function Home() {
         </div>
       </section>
 
-      <VehicleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialTab={modalTab} />
+      <VehicleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

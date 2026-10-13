@@ -6,6 +6,7 @@ import { Product, formatPrice, getCompatibilityStatus } from "../data/products";
 import { useVehicle } from "../context/VehicleContext";
 import { useCart } from "../context/CartContext";
 import IncompatibleAddModal from "./IncompatibleAddModal";
+import { useEstimatedDelivery } from "../lib/useEstimatedDelivery";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ export default function ProductCard({ product, showCompatibility = true }: Produ
   const { addToCart } = useCart();
   const [imgError, setImgError] = useState(false);
   const [showIncompatibleConfirm, setShowIncompatibleConfirm] = useState(false);
+  const delivery = useEstimatedDelivery();
 
   // HU-E07-02: 3 estados reales (compatible / no compatible / sin confirmar) en vez de solo 2.
   // Sin vehículo guardado, no hay nada que evaluar todavía.
@@ -133,6 +135,13 @@ export default function ProductCard({ product, showCompatibility = true }: Produ
               {stock.text}
             </span>
           </div>
+        )}
+
+        {/* HU-E11-02/E18: entrega estimada con fechas (valor de ejemplo; el real depende de E18/D3) */}
+        {!isOutOfStock && delivery && (
+          <span className="product-delivery" title="Valor de ejemplo: el tiempo real depende de la transportadora">
+            Entrega estimada: {delivery.short}
+          </span>
         )}
 
         <div className="product-footer">

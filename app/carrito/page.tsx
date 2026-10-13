@@ -8,7 +8,9 @@ import { useUser } from "../context/UserContext";
 import { useVehicle } from "../context/VehicleContext";
 import { formatPrice } from "../data/products";
 import { getLineCompatibility } from "../lib/cartLine";
+import { useEstimatedDelivery } from "../lib/useEstimatedDelivery";
 import ShippingProgress from "../components/ShippingProgress";
+import NextSteps from "../components/NextSteps";
 import { Address } from "../types/account";
 import CartRevalidationModal from "../components/CartRevalidationModal";
 
@@ -38,6 +40,7 @@ export default function CartPage() {
   } = useUser();
   const { vehicle, isVehicleSaved } = useVehicle();
   const router = useRouter();
+  const delivery = useEstimatedDelivery();
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -309,7 +312,9 @@ export default function CartPage() {
                 <span>{shippingCost === 0 ? "Gratis" : `${formatPrice(shippingCost)} (tarifa plana)`}</span>
               </div>
               {/* HU-E11-02: tiempo estimado, no solo costo. El costo por zona/cobertura sigue siendo decisión abierta (E18). */}
-              <p className="shipping-eta">Entrega estimada: 3 a 5 días hábiles</p>
+              <p className="shipping-eta">
+                Entrega estimada: {delivery ? delivery.long : "3 a 5 días hábiles"} (valor de ejemplo)
+              </p>
               <div className="summary-row total">
                 <span>Total</span>
                 <span>{formatPrice(finalTotal)}</span>
@@ -321,6 +326,7 @@ export default function CartPage() {
               Confirmar pedido
             </button>
             <p className="form-note">Aún no se cobra nada: te contactaremos para coordinar el pago.</p>
+            <NextSteps hasVehicle={isVehicleSaved && !!vehicle} />
           </div>
 
           <form id="checkout-form" className="checkout-form" onSubmit={handleSubmit}>
