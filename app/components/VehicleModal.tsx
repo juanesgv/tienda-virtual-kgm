@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useVehicle, Vehicle } from "../context/VehicleContext";
 import { useDialog } from "../lib/useDialog";
 
@@ -16,10 +16,10 @@ interface VehicleModalProps {
 type Tab = VehicleModalTab;
 
 // Catálogo simulado para la selección guiada (HU-E08-02). No representa el catálogo real de SIISA.
-export const VEHICLE_CATALOG: Record<string, string[]> = {
-  KGM: ["Tivoli", "Tivoli XLV", "Korando", "Rexton", "Musso"],
-  SsangYong: ["Tivoli", "Korando", "Rexton"],
-};
+// El cliente elige el modelo directamente: KGM es el nombre actual de SsangYong, así que la marca no se pregunta
+// y se guarda siempre como KGM (la compatibilidad trata ambos nombres como la misma marca).
+export const VEHICLE_BRAND = "KGM";
+export const VEHICLE_MODELS = ["Tivoli", "Tivoli XLV", "Korando", "Rexton", "Musso"];
 export const YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015];
 const ENGINES = ["1.6L Gasolina", "1.6L Diésel", "2.2L Diésel", "No estoy seguro"];
 
@@ -39,7 +39,6 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
   const [activeTab, setActiveTab] = useState<Tab>("placa");
   const [plate, setPlate] = useState("");
   const [vin, setVin] = useState("");
-  const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
   const [engine, setEngine] = useState("");
@@ -50,8 +49,6 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
 
   const dialogRef = useDialog<HTMLDivElement>(onClose, isOpen);
 
-  const availableModels = useMemo(() => (brand ? VEHICLE_CATALOG[brand] ?? [] : []), [brand]);
-
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
@@ -59,7 +56,6 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
       // Limpiar el formulario cada vez que se cierra, para no arrastrar datos de una búsqueda anterior
       setPlate("");
       setVin("");
-      setBrand("");
       setModel("");
       setYear("");
       setEngine("");
@@ -105,9 +101,9 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
   };
 
   const handleManualSave = () => {
-    if (!brand || !model || !year) return;
+    if (!model || !year) return;
     setVehicle({
-      brand,
+      brand: VEHICLE_BRAND,
       model,
       year: parseInt(year),
       engine: engine && engine !== "No estoy seguro" ? engine : undefined,
@@ -302,22 +298,11 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
             <div className="select-group">
               <select
                 className="select-field"
-                value={brand}
-                onChange={(e) => { setBrand(e.target.value); setModel(""); }}
-              >
-                <option value="">Marca</option>
-                {Object.keys(VEHICLE_CATALOG).map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-              <select
-                className="select-field"
                 value={model}
-                onChange={(e) => setModel(e.target.value)}
-                disabled={!brand}
+                onChange={(e) => { setModel(e.target.value); setYear(""); }}
               >
                 <option value="">Modelo</option>
-                {availableModels.map((m) => (
+                {VEHICLE_MODELS.map((m) => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
@@ -345,7 +330,7 @@ export default function VehicleModal({ isOpen, onClose, initialTab = "placa" }: 
                   <option key={e} value={e}>{e}</option>
                 ))}
               </select>
-              <button className="btn-primary" onClick={handleManualSave} disabled={!brand || !model || !year}>
+              <button className="btn-primary" onClick={handleManualSave} disabled={!model || !year}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>

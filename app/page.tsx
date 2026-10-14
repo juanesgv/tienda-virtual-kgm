@@ -41,7 +41,7 @@ export default function Home() {
             <h1 id="home-title">¿Para qué vehículo compras?</h1>
             <p className="vehicle-panel-lede">
               Elige tu vehículo y te mostramos primero los repuestos que le sirven. Tienda oficial KGM Colombia,
-              compatible con SsangYong y KGM.
+              para vehículos KGM (antes SsangYong).
             </p>
 
             {isVehicleSaved && vehicle ? (

@@ -1,45 +1,52 @@
-<title>Flujos KGM Repuestos</title>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujos del prototipo KGM Repuestos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* Layout: columna única centrada, cada escenario es una tarjeta con su propio diagrama Mermaid con scroll horizontal */
+  /* Una columna centrada. Cada ficha tiene UN recorrido corto, de arriba hacia abajo. Colores fijos y con el mismo significado en todos los diagramas. */
   :root {
-    --bg: #f7f6fb;
+    --bg: #f6f6f9;
     --surface: #ffffff;
-    --fg: #201c2c;
-    --fg-muted: #5b5676;
-    --accent: #3f3953;
-    --accent-soft: #eeecf6;
-    --border: #e3e0ee;
-    --functional: #2bbf7b;
-    --simulated: #b5701f;
-    --simulated-bg: #fdf3e4;
-    color-scheme: light;
+    --fg: #1c1b24;
+    --fg-muted: #565466;
+    --accent: #3f3954;
+    --accent-soft: #ebe9f2;
+    --border: #dcdae6;
+    --client: #5b4fa3;
+    --end: #1a9d68;
+    --sim: #8a5300;
+    --sim-bg: #fff3e0;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #16141f;
-      --surface: #201c2c;
-      --fg: #ede9f7;
-      --fg-muted: #b3adcf;
-      --accent: #b7abe6;
-      --accent-soft: #2b2740;
-      --border: #362f4a;
-      --functional: #4fd99a;
-      --simulated: #f2ad57;
-      --simulated-bg: #332616;
+      --bg: #14131b;
+      --surface: #1e1c28;
+      --fg: #ecebf3;
+      --fg-muted: #b0aec2;
+      --accent: #c2b8ee;
+      --accent-soft: #2a2740;
+      --border: #38354b;
+      --sim: #f2ad57;
+      --sim-bg: #33270f;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #16141f;
-    --surface: #201c2c;
-    --fg: #ede9f7;
-    --fg-muted: #b3adcf;
-    --accent: #b7abe6;
-    --accent-soft: #2b2740;
-    --border: #362f4a;
-    --functional: #4fd99a;
-    --simulated: #f2ad57;
-    --simulated-bg: #332616;
+    --bg: #14131b;
+    --surface: #1e1c28;
+    --fg: #ecebf3;
+    --fg-muted: #b0aec2;
+    --accent: #c2b8ee;
+    --accent-soft: #2a2740;
+    --border: #38354b;
+    --sim: #f2ad57;
+    --sim-bg: #33270f;
     color-scheme: dark;
   }
 
@@ -47,301 +54,580 @@
   body {
     background: var(--bg);
     color: var(--fg);
-    margin: 0;
-    padding: 32px 16px 64px;
-    font-family: "IBM Plex Sans", -apple-system, sans-serif;
-    line-height: 1.5;
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    padding-inline: 16px;
+    padding-block: 32px 64px;
   }
-  .page { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
-
-  h1 {
-    font-family: "Fraunces", Georgia, serif;
-    font-size: clamp(28px, 5vw, 38px);
-    font-weight: 600;
-    margin: 0 0 4px;
-    text-wrap: balance;
-  }
-  h2 {
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 21px;
-    font-weight: 600;
-    margin: 0;
-    text-wrap: balance;
-  }
-  .eyebrow {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-    margin: 0 0 10px;
-  }
+  .page { max-width: 760px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px; }
+  h1 { font-size: clamp(26px, 5vw, 34px); font-weight: 600; line-height: 1.15; margin: 0 0 6px; text-wrap: balance; }
+  h2 { font-size: 20px; font-weight: 600; line-height: 1.25; margin: 0; text-wrap: balance; }
   p { margin: 0; }
+  code { font-family: var(--font-mono); font-size: 0.88em; background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 8px; }
   .lede { color: var(--fg-muted); font-size: 15px; max-width: 62ch; }
 
-  .meta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-  .chip {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 12px;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    white-space: nowrap;
-  }
-
   .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    padding: 14px 18px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface);
-    font-size: 13px;
-    color: var(--fg-muted);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 20px; padding: 14px 18px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+    font-size: 13px; color: var(--fg-muted);
   }
-  .legend-item { display: flex; align-items: center; gap: 8px; }
-  .swatch { width: 22px; height: 14px; border-radius: 4px; border: 1.5px solid var(--functional); flex: none; }
-  .swatch.simulated { border: 1.5px dashed var(--simulated); background: var(--simulated-bg); }
+  .legend-item { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .swatch { width: 28px; height: 16px; border-radius: 4px; flex: none; border: 2px solid var(--border); background: var(--surface); }
+  .swatch.client { background: var(--client); border-color: var(--client); }
+  .swatch.end { border: 3px solid var(--end); }
+  .swatch.sim { border: 2px dashed var(--sim); background: var(--sim-bg); }
+  .swatch.decision { width: 18px; height: 18px; transform: rotate(45deg); border-radius: 3px; margin-inline: 5px; }
 
-  .scenario {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+  nav.index { display: flex; flex-wrap: wrap; gap: 8px; }
+  nav.index a {
+    font-size: 13px; color: var(--accent); text-decoration: none; background: var(--accent-soft);
+    padding: 6px 12px; border-radius: 6px; min-height: 32px; display: inline-flex; align-items: center;
   }
-  .scenario-head { display: flex; flex-direction: column; gap: 8px; }
+  nav.index a:hover { text-decoration: underline; }
+  nav.index a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .diagram-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--bg);
-    padding: 12px 4px;
+  .flow {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 16px;
   }
-  pre.mermaid { margin: 0; min-width: 560px; }
+  .flow-head { display: flex; flex-direction: column; gap: 8px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-family: var(--font-mono); font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .tag.sim { background: var(--sim-bg); color: var(--sim); }
 
-  .notes {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 13.5px;
-    color: var(--fg-muted);
-  }
+  .diagram { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); padding: 14px 8px; min-width: 0; }
+  pre.mermaid { margin: 0; width: 100%; text-align: center; }
+  pre.mermaid svg { max-width: 100%; height: auto; }
+
+  .notes { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--fg-muted); min-width: 0; }
   .notes strong { color: var(--fg); font-weight: 600; }
 
-  footer {
-    border-top: 1px solid var(--border);
-    padding-top: 18px;
-    font-size: 12.5px;
-    color: var(--fg-muted);
-  }
-
-  @media (max-width: 600px) {
-    .scenario { padding: 18px; border-radius: 12px; }
-  }
+  .outside { border-top: 1px solid var(--border); padding-top: 16px; font-size: 14px; color: var(--fg-muted); }
+  .outside strong { color: var(--fg); }
+  footer { font-size: 12.5px; color: var(--fg-muted); }
 </style>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+</head>
+<body>
 <div class="page">
-  <div>
-    <p class="eyebrow">KGM Repuestos · prototipo Next.js</p>
-    <h1>Flujos de usuario</h1>
-    <p class="lede">
-      Cuatro escenarios de validación, dibujados a partir de las épicas e historias de usuario de Notion y de cómo
-      se comportan hoy en el prototipo (rama <code>claude-notion</code>). Cada paso está etiquetado con su HU cuando
-      existe, y todo lo simulado —sin canal, pasarela o integración real— queda marcado como tal.
-    </p>
+  <header>
+    <p class="eyebrow">Prototipo · rama claude-notion · 13 de octubre de 2026</p>
+    <h1>Flujos del prototipo KGM Repuestos</h1>
+    <p class="lede">Solo lo que hoy está construido, tal como se comporta en pantalla. Cada ficha cuenta un recorrido corto, de arriba hacia abajo. No incluye lo que Notion define y todavía no existe.</p>
+  </header>
+
+  <div class="legend" role="note" aria-label="Cómo leer los diagramas">
+    <span class="legend-item"><span class="swatch client" aria-hidden="true"></span>Lo que hace el cliente</span>
+    <span class="legend-item"><span class="swatch" aria-hidden="true"></span>Lo que hace la tienda</span>
+    <span class="legend-item"><span class="swatch decision" aria-hidden="true"></span>Una decisión, con sus salidas</span>
+    <span class="legend-item"><span class="swatch end" aria-hidden="true"></span>Resultado al que se llega</span>
+    <span class="legend-item"><span class="swatch sim" aria-hidden="true"></span>Simulado: sin SIISA, RUNT, PayU, correo ni canal real</span>
   </div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="swatch"></span> Funciona en el prototipo</div>
-    <div class="legend-item"><span class="swatch simulated"></span> Simulado — sin integración real</div>
-  </div>
+  <nav class="index" aria-label="Flujos">
+    <a href="#mapa">Mapa</a>
+    <a href="#accesos">Accesos</a>
+    <a href="#vehiculo">Vehículo</a>
+    <a href="#busqueda">Búsqueda</a>
+    <a href="#catalogo">Catálogo</a>
+    <a href="#compat">Compatibilidad</a>
+    <a href="#ficha">Ficha</a>
+    <a href="#carrito">Compra</a>
+    <a href="#cuenta-acceso">Cuenta</a>
+    <a href="#asesor">Asesor</a>
+    <a href="#degradado">Servicio caído</a>
+  </nav>
 
-  <!-- Escenario 1 -->
-  <section class="scenario">
-    <div class="scenario-head">
-      <div class="meta-row">
-        <span class="chip">E02 · E04 · E05</span>
-      </div>
-      <h2>1. Búsqueda sin vehículo</h2>
-      <p class="lede">Un cliente entra sin haber guardado un vehículo y busca por nombre o referencia.</p>
+  <!-- Mapa -->
+  <section class="flow" id="mapa">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">Navegación</span></div>
+      <h2>Mapa de pantallas</h2>
+      <p class="lede">El camino principal de una compra, de la portada al pedido.</p>
     </div>
-    <div class="diagram-wrap">
+    <div class="diagram">
 <pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
-    A["Cliente entra a la tienda<br/>sin vehículo guardado"] --> B["Escribe un término<br/>en el buscador"]
-    B --> C["Ve sugerencias en vivo<br/>mientras escribe (HU-E04-03)"]
-    C --> D{"¿La búsqueda<br/>encuentra algo?"}
-    D -- "Sí" --> E["Resultados en /buscar<br/>(HU-E04-01/02)"]
-    D -- "No, pero hay una<br/>corrección posible" --> F["'¿Quisiste decir…?'<br/>(tolera errores tipográficos)"]
-    F --> G{"¿Acepta la<br/>corrección?"}
-    G -- "Sí" --> E
-    G -- "No, buscar<br/>el término literal" --> H{"¿Ese término<br/>exacto trae algo?"}
-    D -- "No hay ninguna<br/>coincidencia" --> I["Estado vacío:<br/>categorías sugeridas"]
-    H -- "No" --> I
-    H -- "Sí" --> E
-    I --> J["'¿Sigues sin encontrarlo?<br/>Habla con un asesor'"]:::simulated
-    J --> K["Se abre el formulario<br/>de asesoría con la<br/>búsqueda como contexto"]:::simulated
-    E --> L["Abre la ficha<br/>de un producto"]
-    L --> M["Sin vehículo:<br/>'Guarda tu vehículo para<br/>verificar compatibilidad'"]
-    M --> N["Agrega al carrito<br/>sin aviso de compatibilidad"]
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    H["Inicio"] --> C["Catálogo"]
+    H --> S["Búsqueda"]
+    H --> F["Ficha de producto"]
+    C --> F
+    S --> F
+    F --> K["Carrito"]
+    K --> P["Pedido confirmado"]:::end1
+    P --> A["Mi cuenta"]
+    A -->|"volver a pedir"| K
 </pre>
     </div>
     <div class="notes">
-      <p><strong>Supuesto.</strong> La corrección tipográfica usa distancia de Levenshtein sobre el catálogo; el umbral de tolerancia no está definido en Notion.</p>
-      <p><strong>Simulado.</strong> El botón de asesoría abre un formulario que registra la solicitud en el navegador; no hay canal real (E21/E22/E54 sin historias completas).</p>
+      <p><strong>Dónde se guarda todo.</strong> Vehículo, garaje, carrito, cuentas y pedidos viven en el navegador (<code>localStorage</code>). No hay servidor: cambiar de navegador o limpiar datos los borra.</p>
     </div>
   </section>
 
-  <!-- Escenario 2 -->
-  <section class="scenario">
-    <div class="scenario-head">
-      <div class="meta-row">
-        <span class="chip">E07 · E08 · E10</span>
-      </div>
-      <h2>2. Búsqueda con vehículo activo</h2>
-      <p class="lede">Con un vehículo guardado, la compatibilidad tiene tres estados: nunca solo dos.</p>
+  <!-- Accesos -->
+  <section class="flow" id="accesos">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">Navegación</span></div>
+      <h2>Lo que está siempre a mano</h2>
+      <p class="lede">Siete accesos de la cabecera y el pie, disponibles en cualquier pantalla.</p>
     </div>
-    <div class="diagram-wrap">
+    <div class="diagram">
 <pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 24, "rankSpacing": 34}}}%%
 flowchart TD
-    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
-    A["Cliente guarda un vehículo<br/>(placa/VIN simulado o manual)<br/>HU-E08-01/02"] --> B["Vehículo activo:<br/>marca, modelo, año, motor"]
-    B --> C["Catálogo o búsqueda:<br/>compatibles primero,<br/>luego 'verificar',<br/>luego no compatibles"]
-    C --> D{"¿Filtro 'solo<br/>compatibles' activo?<br/>(persiste, HU-E07-01)"}
-    D -- "Sí" --> E["Solo se listan<br/>los compatibles"]
-    D -- "No" --> F["Se listan todos,<br/>priorizados"]
-    E --> G["Abre la ficha<br/>de un producto"]
-    F --> G
-    G --> H{"Estado de<br/>compatibilidad<br/>(HU-E07-02)"}
-    H -- "Compatible" --> I["Banner verde:<br/>'Es compatible'"]
-    I --> J["Agrega al carrito<br/>sin advertencia"]
-    H -- "Sin confirmar<br/>(sin datos o motor<br/>sin indicar)" --> K["Banner amarillo:<br/>'Aún no podemos confirmar,<br/>no significa que no sirva'"]
-    K --> L["Agrega al carrito<br/>sin advertencia"]
-    K --> M["'Confirmar compatibilidad<br/>con un asesor'"]:::simulated
-    H -- "No compatible" --> N["Banner rojo<br/>+ motivo (año, motor o modelo)"]
-    N --> O["Intenta agregar<br/>al carrito"]
-    O --> P["Modal de confirmación<br/>consciente (HU-E10-04)"]
-    P --> Q{"¿Confirma<br/>agregarlo igual?"}
-    Q -- "Sí" --> R["Se agrega,<br/>marcado como no compatible"]
-    Q -- "No" --> S["Cancela"]
-    N --> T{"¿Hay alternativas<br/>compatibles en la<br/>misma categoría?"}
-    T -- "Sí" --> U["Se muestran<br/>como alternativas"]
-    T -- "No" --> V["'Habla con un asesor<br/>sobre este repuesto'"]:::simulated
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    subgraph CAB["Cabecera"]
+        direction TB
+        a1["Chip de vehículo"]:::client --> b1["Ventana: vehículo y garaje"]
+        a2["Icono de carrito"]:::client --> b2["Panel lateral del carrito"]
+        a3["Buscador"]:::client --> b3["Resultados de búsqueda"]
+        a4["Icono de cuenta"]:::client --> b4["Mi cuenta"]
+    end
+    subgraph PIE["Pie de página"]
+        direction TB
+        c1["Pedir un asesor"]:::client --> d1["Ventana: asesor"]:::sim
+        c2["Demo: registro"]:::client --> d2["Registro de solicitudes"]:::sim
+        c3["Demo: simular fallo"]:::client --> d3["Catálogo caído"]:::sim
+    end
+</pre>
+    </div>
+  </section>
+
+  <!-- Vehículo 1 -->
+  <section class="flow" id="vehiculo">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E01 · E08</span><span class="tag sim">Placa y VIN simulados</span></div>
+      <h2>Identificar mi vehículo</h2>
+      <p class="lede">Se digita o se elige, sin fotos. La placa viene primero.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Quiere ver repuestos<br/>para su vehículo"]:::client --> B{"¿Cómo lo identifica?"}
+    B -->|"Placa"| P["Escribe la placa<br/>6 caracteres"]:::client
+    B -->|"VIN"| V["Escribe el VIN<br/>17 caracteres"]:::client
+    B -->|"Modelo"| M["Elige marca,<br/>modelo y año"]:::client
+    P --> R["Muestra un vehículo<br/>de ejemplo"]:::sim
+    V --> R
+    R --> C{"¿Es el suyo?"}
+    C -->|"Sí"| G["Lo guarda en el garaje<br/>y lo deja activo"]:::end1
+    C -->|"No"| M
+    M --> G
 </pre>
     </div>
     <div class="notes">
-      <p><strong>Del Modelo conceptual (§3).</strong> "Sin confirmar" nunca se trata como rechazo: el repuesto puede servir, solo falta el dato.</p>
-      <p><strong>Hallazgo abierto.</strong> Agregar un producto en estado "sin confirmar" no muestra ninguna advertencia propia, solo la de "no compatible" la tiene.</p>
+      <p><strong>Dónde empieza.</strong> En el panel de la portada o en el chip de la cabecera. La ventana de la cabecera suma una pestaña "por línea", el motor opcional y Mi garaje.</p>
+      <p><strong>Si el dato no sirve.</strong> Una placa de menos de 6 caracteres o un VIN de menos de 17 muestra un error y deja elegir otro método.</p>
+      <p><strong>Simulado.</strong> Cualquier placa o VIN válido en largo devuelve el mismo vehículo de ejemplo. No hay consulta a RUNT ni a SIISA.</p>
     </div>
   </section>
 
-  <!-- Escenario 3 -->
-  <section class="scenario">
-    <div class="scenario-head">
-      <div class="meta-row">
-        <span class="chip">E54 · simulado</span>
-      </div>
-      <h2>3. No sé qué repuesto necesito</h2>
-      <p class="lede">Siete puntos de entrada abren el mismo formulario de asesoría, con el contexto de cada uno.</p>
+  <!-- Vehículo 2 -->
+  <section class="flow" id="vehiculo-activo">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E07 · E08</span></div>
+      <h2>Con un vehículo activo</h2>
+      <p class="lede">Qué cambia en la tienda y cómo se cambia o se quita.</p>
     </div>
-    <div class="diagram-wrap">
+    <div class="diagram">
 <pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
-    A["Cliente no sabe qué<br/>repuesto necesita"] --> B{"¿Desde dónde<br/>pide ayuda?"}
-    B -- "Inicio" --> C1["origin: home"]
-    B -- "Pie de página" --> C2["origin: footer"]
-    B -- "Búsqueda sin<br/>resultados" --> C3["origin: empty_search"]
-    B -- "Catálogo caído" --> C4["origin: service_down"]
-    B -- "Duda de<br/>compatibilidad" --> C5["origin: product_compat"]
-    B -- "Sin alternativas<br/>compatibles" --> C6["origin: product_no_alternatives"]
-    B -- "Duda sobre<br/>complementos" --> C7["origin: product_complements"]
-    C1 --> D
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    G["Vehículo activo"]:::end1 --> A["Chip en la cabecera"]
+    G --> B["Etiqueta de compatibilidad en<br/>tarjetas, ficha y carrito"]
+    G --> C["Aparece el filtro<br/>solo compatibles"]
+    A --> D{"¿Qué hace el cliente?"}
+    D -->|"Cambiar"| E["Abre la ventana y<br/>elige otro del garaje"]:::client
+    D -->|"Quitar"| F["Sigue en el garaje<br/>y se apaga el filtro"]:::client
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Sin vehículo la tienda no se bloquea.</strong> Se ve todo el catálogo; solo desaparecen las etiquetas de compatibilidad.</p>
+    </div>
+  </section>
+
+  <!-- Búsqueda 1 -->
+  <section class="flow" id="busqueda">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E04 · E05</span></div>
+      <h2>Buscar un repuesto</h2>
+      <p class="lede">Desde el buscador de la cabecera, con ejemplos, sugerencias y corrección de tipeo.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    A["Hace clic en el buscador"]:::client --> B["Ve ejemplos que rotan:<br/>Disco de freno Tivoli"]
+    B --> C["Escribe"]:::client
+    C --> D["Sugerencias en vivo"]
+    D -->|"Elige una"| F["Ficha o categoría"]:::end1
+    C -->|"Presiona Enter"| R{"¿Hay resultados?"}
+    R -->|"Sí"| L["Lista con compatibilidad,<br/>filtros y orden"]:::end1
+    R -->|"Con corrección"| K["Muestra el término corregido<br/>y deja buscar el original"]
+    K --> L
+    R -->|"No"| N["Ver el flujo siguiente"]
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Con el catálogo caído</strong> las sugerencias se apagan (último flujo).</p>
+    </div>
+  </section>
+
+  <!-- Búsqueda 2 -->
+  <section class="flow" id="sin-resultados">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E04 · E13</span><span class="tag sim">Asesor simulado</span></div>
+      <h2>Cuando no hay resultados</h2>
+      <p class="lede">La búsqueda no termina en un callejón: ofrece salidas y deja constancia de lo que faltó.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Búsqueda sin resultados"] --> B["Sugiere un término<br/>más general y categorías"]
+    A --> C["Registra el término,<br/>sin pedir datos personales"]
+    B --> D["Explora una categoría"]:::client
+    B --> E["Lo conseguimos por ti:<br/>pide a un asesor"]:::sim
+    X["Hay resultados, pero el filtro<br/>de compatibles los oculta"] --> Y["Aviso y botón para<br/>verlos todos"]
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Demanda sin identidad.</strong> Cada búsqueda sin resultados guarda término, fecha y vehículo activo. Se consulta agrupada en la pantalla de demo del registro.</p>
+    </div>
+  </section>
+
+  <!-- Catálogo -->
+  <section class="flow" id="catalogo">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E02 · E03 · E05</span></div>
+      <h2>Explorar el catálogo</h2>
+      <p class="lede">Por categoría o completo, con filtros combinables y 8 productos por página.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    A["Entra al catálogo"]:::client --> B["Elige categoría,<br/>todos o solo compatibles"]:::client
+    B --> C["Afina con filtros:<br/>subcategoría, precio"]:::client
+    C --> D["Ordena por relevancia,<br/>precio o nombre"]:::client
+    D --> E{"¿Quedan productos?"}
+    E -->|"Sí"| F["Lista de 8 por página,<br/>filtros activos visibles"]:::end1
+    E -->|"No"| G["Dice qué filtro quitar"]
+    F --> H["Abre la ficha o<br/>agrega al carrito"]:::client
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Relevancia.</strong> Con vehículo activo, lo compatible va primero. Lo no compatible se señala, no se oculta.</p>
+      <p><strong>En el celular</strong> los filtros se abren en una capa a pantalla completa.</p>
+    </div>
+  </section>
+
+  <!-- Compatibilidad -->
+  <section class="flow" id="compat">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E07 · E10</span></div>
+      <h2>Cómo se decide la compatibilidad</h2>
+      <p class="lede">Tres resultados posibles. Sin vehículo activo no hay resultado, pero para qué vehículos sirve el repuesto siempre se ve.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef ok fill:#0f7a4d,stroke:#0f7a4d,color:#ffffff;
+    classDef no fill:#b3261e,stroke:#b3261e,color:#ffffff;
+    classDef unk fill:#8a5300,stroke:#8a5300,color:#ffffff;
+    A{"¿Hay vehículo activo?"} -->|"No"| X["Sin estado.<br/>Solo se ve para qué<br/>vehículos sirve"]
+    A -->|"Sí"| B{"¿El repuesto tiene<br/>datos de aplicación?"}
+    B -->|"No"| U["SIN CONFIRMAR"]:::unk
+    B -->|"Sí"| C{"¿Coinciden modelo<br/>y año?"}
+    C -->|"No"| N["NO COMPATIBLE"]:::no
+    C -->|"Sí"| D{"¿Pide un motor?"}
+    D -->|"No"| OK["COMPATIBLE"]:::ok
+    D -->|"Sí"| E{"¿El vehículo tiene<br/>ese motor?"}
+    E -->|"Sí, igual"| OK
+    E -->|"Sí, distinto"| N
+    E -->|"No lo indicó"| U
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Dónde se ve.</strong> Etiqueta con icono y texto en cada tarjeta; banner con el motivo en la ficha; fila marcada como tu vehículo en la tabla; estado por línea en el carrito, según el vehículo con que se agregó.</p>
+      <p><strong>Sin confirmar nunca es rechazo.</strong> El repuesto puede servir y solo falta el dato. Se ofrece verificarlo con un asesor.</p>
+    </div>
+  </section>
+
+  <!-- Ficha 1 -->
+  <section class="flow" id="ficha">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E06 · E07</span><span class="tag sim">Asesor simulado</span></div>
+      <h2>Ficha de producto: qué se ve</h2>
+      <p class="lede">El banner cambia según la compatibilidad; lo demás aparece siempre.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Abre la ficha"]:::client --> B{"¿Descontinuada?"}
+    B -->|"Sí"| B1["Avisa que ya no se vende<br/>y muestra alternativas"]
+    B -->|"No"| C{"¿Qué dice el banner?"}
+    C -->|"Sin vehículo"| C1["Invita a elegirlo"]
+    C -->|"Compatible"| C2["Lo confirma<br/>con el vehículo"]
+    C -->|"Sin confirmar"| C3["Explica el motivo y<br/>ofrece un asesor"]:::sim
+    C -->|"No compatible"| C4["Explica el motivo y<br/>muestra alternativas"]
+    C1 --> D["Debajo, siempre: aplicación en<br/>una frase, tabla filtrable,<br/>entrega estimada"]
     C2 --> D
     C3 --> D
     C4 --> D
-    C5 --> D
-    C6 --> D
-    C7 --> D["Se abre el formulario y se<br/>guarda dónde estaba<br/>(HU-E54-04)"]:::simulated
-    D --> E["Elige qué contexto compartir:<br/>vehículo, búsqueda,<br/>producto, carrito"]:::simulated
-    E --> F["Describe su necesidad<br/>y elige un canal<br/>(WhatsApp / llamada / correo)"]:::simulated
-    F --> G["Ve el horario de<br/>atención (ejemplo)<br/>HU-E54-01"]:::simulated
-    G --> H["Envía la solicitud"]:::simulated
-    H --> I{"Se clasifica<br/>por origen"}:::simulated
-    I -- "No encontró algo<br/>o algo falló" --> J["fricción"]:::simulated
-    I -- "Necesita criterio<br/>experto" --> K["asesoría"]:::simulated
-    J --> L["Confirmación con número<br/>de solicitud (ASE-######)"]:::simulated
-    K --> L
-    L --> M["'Volver a lo que estaba<br/>haciendo': carrito y<br/>vehículo intactos"]
-    L --> N["Queda en el registro<br/>de demo /asesoria/registro"]:::simulated
 </pre>
     </div>
     <div class="notes">
-      <p><strong>Del Modelo conceptual (§7).</strong> "Fricción" y "asesoría" son clasificaciones distintas: la primera mide algo que falló, la segunda una necesidad real de criterio experto.</p>
-      <p><strong>Simulado por completo.</strong> No hay canal, horario ni bandeja real: E21, E22 y E54 no tienen historias completas en Notion.</p>
+      <p><strong>Pendiente de Notion.</strong> La política de garantía y devoluciones está por definir (E19): la ficha lo dice en vez de afirmar plazos.</p>
     </div>
   </section>
 
-  <!-- Escenario 4 -->
-  <section class="scenario">
-    <div class="scenario-head">
-      <div class="meta-row">
-        <span class="chip">E10 · E11 · E17 · E18</span>
-      </div>
-      <h2>4. Intención de compra</h2>
-      <p class="lede">Del carrito a la confirmación del pedido, sin pasarela de pago real.</p>
+  <!-- Ficha 2 -->
+  <section class="flow" id="ficha-agregar">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E06 · E10 · E13 · E55</span><span class="tag sim">Aviso y complementos simulados</span></div>
+      <h2>Ficha de producto: agregar</h2>
+      <p class="lede">Del stock a la advertencia de compatibilidad, hasta el carrito.</p>
     </div>
-    <div class="diagram-wrap">
+    <div class="diagram">
 <pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    classDef simulated stroke-dasharray: 5 4,stroke-width:2px;
-    A["Producto agregado al carrito<br/>(guarda el vehículo con el<br/>que se agregó, HU-E17-03)"] --> B["Carrito: subtotal y<br/>'te faltan $X para envío<br/>gratis' (valores de ejemplo, D3)"]
-    B --> C["Compatibilidad por línea,<br/>según el vehículo de esa línea"]
-    C --> D["Proceder al pago"]
-    D --> E["Revalida contra el<br/>catálogo actual (HU-E11-05)"]
-    E --> F{"¿Cambió algo?<br/>(agotado, descontinuado,<br/>precio, cantidad)"}
-    F -- "Sí" --> G["'Algo cambió en<br/>tu carrito'"]
-    G --> H["Actualiza el pedido"]
-    H --> E
-    F -- "No" --> I{"¿Sesión<br/>iniciada?"}
-    I -- "No" --> J["Inicia sesión<br/>o se registra"]
-    J --> K["Elige una dirección<br/>guardada o escribe una"]
-    I -- "Sí" --> K
-    K --> L["Confirma el pedido"]:::simulated
-    L --> M["Página de confirmación<br/>/pedido/[id]"]
-    M --> N["Seguimiento del pedido<br/>(estados simulados)"]:::simulated
-    N --> O["Desde el historial:<br/>'Volver a pedir' (HU-E17-02)"]
-    O --> P["Reintenta cada línea<br/>contra el catálogo actual"]
-    P --> Q{"¿Todo sigue<br/>disponible?"}
-    Q -- "Sí" --> R["Se agrega todo<br/>al carrito"]
-    Q -- "No" --> S["Avisa qué faltó<br/>y agrega el resto"]
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A{"¿Hay stock?"} -->|"Agotado"| B["Sin compra.<br/>Avísame: pide iniciar sesión"]:::sim
+    A -->|"Sí"| C["Elige la cantidad<br/>máximo el stock"]:::client
+    C --> D{"¿Es no compatible?"}
+    D -->|"No"| G["Agrega al carrito,<br/>anotando el vehículo"]:::end1
+    D -->|"Sí"| E["Ventana de advertencia"]
+    E -->|"Agregar igual"| G
+    E -->|"Cancelar"| F["No agrega nada"]
+    G --> H["Ofrece complementos<br/>necesarios y recomendados"]:::sim
 </pre>
     </div>
     <div class="notes">
-      <p><strong>Simulado.</strong> No hay integración con PayU ni con SIISA: el pedido se confirma y se guarda en el navegador del cliente.</p>
-      <p><strong>Decisión abierta (D3).</strong> El umbral de envío gratis y la tarifa plana son valores de ejemplo, sin dueño asignado en Notion.</p>
+      <p><strong>Sin confirmar no frena.</strong> Solo "no compatible" pide confirmación antes de agregar; "sin confirmar" se agrega sin advertencia propia.</p>
+      <p><strong>Simulado.</strong> El aviso de disponibilidad no envía correo y los complementos son un maestro de ejemplo para pocos productos.</p>
     </div>
   </section>
 
-  <footer>
-    Preparado a partir del backlog de Notion (épicas E01–E58) y del estado del prototipo en la rama
-    <code>claude-notion</code>. No sustituye las historias de usuario ni el Modelo conceptual de dominio: donde
-    difieran, esos documentos son la fuente de verdad.
-  </footer>
+  <!-- Compra 1 -->
+  <section class="flow" id="carrito">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E10 · E11 · E18</span><span class="tag sim">Valores de ejemplo</span></div>
+      <h2>Compra: del carrito a los datos</h2>
+      <p class="lede">Lo que se ve y se completa antes de confirmar.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Abre el carrito"]:::client --> B["Ve cada línea con cantidad<br/>y compatibilidad"]
+    B --> C["Resumen: subtotal, envío y<br/>cuánto falta para envío gratis"]:::sim
+    C --> D["Entrega estimada y<br/>qué pasa después"]:::sim
+    D --> E["Completa los datos de envío"]:::client
+    E --> F{"¿Tiene sesión?"}
+    F -->|"No"| G["Crea cuenta o inicia sesión<br/>en el mismo formulario"]:::client
+    F -->|"Sí"| H["Elige una dirección<br/>guardada o escribe otra"]:::client
+    G --> H
+    H --> I["Confirmar pedido"]:::client
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Valores de ejemplo.</strong> Envío gratis desde $100.000, tarifa plana y entrega de 3 a 5 días hábiles son decisiones abiertas (D3, E18).</p>
+    </div>
+  </section>
+
+  <!-- Compra 2 -->
+  <section class="flow" id="confirmar">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E11 · E15 · E17</span><span class="tag sim">Sin pasarela de pago</span></div>
+      <h2>Compra: confirmar el pedido</h2>
+      <p class="lede">Antes de crear el pedido se revisa que nada haya cambiado. No se cobra: el cliente es contactado para coordinar el pago.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Confirmar pedido"]:::client --> B{"¿Algo cambió en<br/>el catálogo?"}
+    B -->|"No"| D["Crea el pedido<br/>y vacía el carrito"]
+    D --> E["Página de confirmación"]:::end1
+    B -->|"Sí"| F["Ventana: qué cambió<br/>agotado, descontinuado,<br/>menos stock o precio"]
+    F -->|"Actualizar mi pedido"| G["Aplica los ajustes<br/>sin cobrar nada"]:::client
+    G --> A
+    F -->|"Revisar mi carrito"| H["Vuelve al carrito"]:::client
+    E --> I["Número, resumen,<br/>entrega estimada y<br/>qué pasa después"]
+    E --> J["Seguimiento del pedido"]:::sim
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Lo real.</strong> La revisión antes de confirmar, la cuenta creada en el checkout, las direcciones guardadas y el vehículo anotado en cada línea del pedido.</p>
+    </div>
+  </section>
+
+  <!-- Cuenta 1 -->
+  <section class="flow" id="cuenta-acceso">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E09</span><span class="tag sim">Recuperación simulada</span></div>
+      <h2>Entrar a mi cuenta</h2>
+      <p class="lede">Iniciar sesión, crear la cuenta o recuperar la contraseña.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Entra a Mi cuenta"]:::client --> B{"¿Tiene sesión?"}
+    B -->|"Sí"| M["Menú de la cuenta"]:::end1
+    B -->|"No"| C{"¿Qué necesita?"}
+    C -->|"Iniciar sesión"| M
+    C -->|"Crear cuenta"| D["Errores por campo; si el<br/>correo existe, ofrece iniciar sesión"]
+    D --> M
+    C -->|"Olvidé la contraseña"| E["Código simulado y<br/>contraseña nueva"]:::sim
+    E --> M
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Contraseñas.</strong> Se guardan en el navegador sin cifrar: es un prototipo, no un modelo de seguridad.</p>
+    </div>
+  </section>
+
+  <!-- Cuenta 2 -->
+  <section class="flow" id="cuenta">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E16 · E17</span></div>
+      <h2>Dentro de mi cuenta</h2>
+      <p class="lede">Seis secciones; la de pedidos permite volver a pedir.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 26, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    M["Menú de la cuenta"]:::end1 --> A["Resumen"]
+    M --> B["Mis pedidos"]
+    M --> C["Datos personales"]
+    M --> D["Direcciones"]
+    M --> E["Mi garaje"]
+    M --> F["Métodos de pago"]:::sim
+    B --> B1["Filtra por vehículo<br/>y abre el detalle"]
+    B1 --> B2["Volver a pedir:<br/>agrega con precio y stock de hoy"]
+    C --> C1["Edita nombre y teléfono;<br/>cambia la contraseña<br/>con la actual"]
+    D --> D1["Agrega, edita, elimina<br/>y marca la predeterminada"]
+    F --> F1["Solo estado vacío"]:::sim
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Volver a pedir.</strong> Reintenta cada línea contra el catálogo de hoy y avisa qué no se pudo agregar y por qué.</p>
+    </div>
+  </section>
+
+  <!-- Asesor -->
+  <section class="flow" id="asesor">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E54 · E21 · E22</span><span class="tag sim">Simulado por completo</span></div>
+      <h2>Pedir ayuda a un asesor</h2>
+      <p class="lede">El mismo formulario desde siete puntos, con el contexto de donde nació la solicitud.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Pide ayuda desde<br/>uno de siete puntos"]:::client --> B["Se abre el formulario"]:::sim
+    B --> C["Elige qué compartir:<br/>vehículo, búsqueda,<br/>producto, carrito"]:::client
+    C --> D["Escribe qué necesita<br/>y elige el canal"]:::client
+    D --> E["Ve el horario<br/>de ejemplo"]:::sim
+    E --> F{"¿Contacto válido?"}
+    F -->|"No"| D
+    F -->|"Sí"| G["Se envía y se clasifica:<br/>fricción o asesoría"]:::sim
+    G --> H["Confirmación con número"]:::sim
+    H --> I["Vuelve a lo que<br/>estaba haciendo"]:::end1
+    H --> J["Queda en el<br/>registro de demo"]:::sim
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Los siete puntos.</strong> Inicio, pie de página, búsqueda sin resultados, catálogo caído, duda de compatibilidad, repuesto sin alternativas y duda de complementos.</p>
+      <p><strong>Fricción o asesoría.</strong> Fricción es no encontrar algo o que algo falle; asesoría es necesitar criterio experto.</p>
+      <p><strong>Sin canal real.</strong> No hay bandeja, horario real ni mensaje enviado: la solicitud solo queda guardada en el navegador.</p>
+    </div>
+  </section>
+
+  <!-- Degradado -->
+  <section class="flow" id="degradado">
+    <div class="flow-head">
+      <div class="tags"><span class="tag">E02</span><span class="tag sim">Interruptor de demo</span></div>
+      <h2>Cuando el catálogo no responde</h2>
+      <p class="lede">El pie de página trae un interruptor para mostrar este escenario.</p>
+    </div>
+    <div class="diagram">
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Activa el interruptor<br/>del pie de página"]:::sim --> B{"¿En qué pantalla está?"}
+    B -->|"Inicio"| C["Los destacados muestran un<br/>mensaje; el resto sigue igual"]
+    B -->|"Buscador"| E["Sin sugerencias"]
+    B -->|"Catálogo, búsqueda o ficha"| D["Aviso: no pudimos<br/>completar la operación"]
+    D --> F["Reintentar<br/>recarga la página"]:::client
+    D --> G["Pedir un asesor"]:::sim
+    D --> J["Ir al inicio"]:::client
+    F --> H{"¿Sigue la falla?"}
+    H -->|"Sí"| D
+    H -->|"No"| I["Vuelve el contenido"]:::end1
+</pre>
+    </div>
+    <div class="notes">
+      <p><strong>Origen.</strong> La épica E40 no tiene historias escritas en Notion; este comportamiento se apoya en HU-E02-04 (saber que el catálogo no está disponible).</p>
+    </div>
+  </section>
+
+  <p class="outside"><strong>Fuera de este mapa, a propósito:</strong> pago real (PayU), conexión con SIISA, correos, back-office, política de garantía y devoluciones (E19), fidelización (E23), promociones y reseñas. No existen en el prototipo.</p>
+
+  <footer>Generado a partir del código de la rama <code>claude-notion</code>. Donde difiera de las historias de usuario o del modelo conceptual en Notion, esos documentos mandan.</footer>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  /* Fuera del visor de artefactos hay que cargar y arrancar Mermaid; el tema sigue al del sistema. */
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default",
+    flowchart: { htmlLabels: true, curve: "basis" }
+  });
+</script>
+</body>
+</html>

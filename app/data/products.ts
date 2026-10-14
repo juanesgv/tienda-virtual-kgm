@@ -714,13 +714,19 @@ function yearInRange(years: string, year: number): boolean {
   return year >= parseInt(range[1]) && year <= parseInt(range[2]);
 }
 
+// KGM es el nombre actual de SsangYong: para comparar compatibilidad ambos nombres son la misma marca.
+function normalizeBrand(brand: string): string {
+  const b = brand.toLowerCase();
+  return b === 'ssangyong' ? 'kgm' : b;
+}
+
 export function getCompatibilityDetail(product: Product, vehicle: VehicleLike): CompatibilityDetail {
   if (product.compatibleVehicles.length === 0) {
     return { status: 'unknown', reason: 'no_data' };
   }
 
   const sameModel = product.compatibleVehicles.filter(v =>
-    v.brand.toLowerCase() === vehicle.brand.toLowerCase() &&
+    normalizeBrand(v.brand) === normalizeBrand(vehicle.brand) &&
     v.model.toLowerCase() === vehicle.model.toLowerCase()
   );
   if (sameModel.length === 0) {

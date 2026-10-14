@@ -74,7 +74,7 @@ Prioridad: Alta
 
 - `RF-005` El sistema debe permitir buscar repuestos por nombre, referencia o texto relacionado.
 - `RF-006` El sistema debe permitir filtrar productos por categoria.
-- `RF-007` El sistema debe permitir asociar un vehiculo a la sesion del usuario. El vehiculo puede identificarse por placa, VIN o seleccion guiada de marca, modelo y anio (motor opcional), y se guarda en un garaje con varios vehiculos de los que uno esta activo.
+- `RF-007` El sistema debe permitir asociar un vehiculo a la sesion del usuario. El vehiculo puede identificarse por placa, VIN o seleccion guiada de modelo y anio (sin preguntar la marca; motor opcional), y se guarda en un garaje con varios vehiculos de los que uno esta activo.
 - `RF-008` El sistema debe identificar, para el vehiculo activo, si un producto es compatible, no compatible o si la compatibilidad no se puede confirmar (por ejemplo, porque falta el motor o el dato del repuesto). "Sin confirmar" nunca se presenta como rechazo.
 - `RF-009` El sistema debe permitir mostrar solo productos compatibles con el vehiculo activo. El filtro solo tiene efecto con un vehiculo activo y se apaga si el usuario se queda sin vehiculo activo.
 
@@ -98,7 +98,7 @@ Como comprador, quiero guardar mi vehiculo, para saber si los repuestos aplican 
 
 Criterios de aceptacion:
 
-- El usuario identifica su vehiculo digitando o eligiendo, sin fotos de documentos: placa (metodo por defecto), modelo (marca, modelo y anio) o VIN (disponible, de menor uso por su longitud). Los tres estan en la portada, sin pasar por una ventana aparte; el motor es opcional. Las busquedas por placa y VIN piden confirmar el resultado antes de guardarlo y, si fallan, ofrecen la seleccion manual. En el prototipo estas busquedas son simuladas (sin RUNT ni SIISA).
+- El usuario identifica su vehiculo digitando o eligiendo, sin fotos de documentos: placa (metodo por defecto), modelo (modelo y anio; la marca no se pregunta porque KGM y SsangYong son la misma marca) o VIN (disponible, de menor uso por su longitud). Los tres estan en la portada, sin pasar por una ventana aparte; el motor es opcional. Las busquedas por placa y VIN piden confirmar el resultado antes de guardarlo y, si fallan, ofrecen la seleccion manual. En el prototipo estas busquedas son simuladas (sin RUNT ni SIISA).
 - Si no se indica el motor, el vehiculo queda marcado como "version sin confirmar".
 - El usuario puede guardar varios vehiculos en "Mi garaje", elegir cual esta activo, cambiar de vehiculo y quitar el vehiculo activo sin borrarlo del garaje.
 - El garaje queda persistido para visitas posteriores.

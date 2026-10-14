@@ -1,473 +1,409 @@
-# Diagramas de flujo — tienda virtual de repuestos KGM
+# Flujos del prototipo KGM Repuestos
 
-**Actualizado:** 30 de septiembre de 2026  
-**Base técnica:** prototipo Next.js actual, incluido el árbol de trabajo sin confirmar  
-**Base funcional:** backlog, modelo conceptual, decisiones pendientes y épicas detalladas de Notion
+> Estado de la rama `claude-notion` al 13 de octubre de 2026. Solo lo que hoy está construido, tal como se comporta en pantalla. Cada ficha cuenta un recorrido corto, de arriba hacia abajo. No incluye lo que Notion define y todavía no existe.
 
-## Cómo leer los diagramas
+**Cómo leerlos.** Trazo continuo: funciona de verdad en el navegador (la lógica y el guardado son reales). Trazo punteado: simulado, sin integración (SIISA, RUNT, PayU, correo, canal de asesoría). Hay una versión navegable en `diagramas-flujo.html`.
 
-- **Verde — funcional:** comportamiento navegable en el prototipo actual.
-- **Naranja — simulado:** existe para validar la experiencia, pero usa datos locales o reglas de ejemplo.
-- **Rojo — pendiente:** comportamiento exigido o esperado que todavía no está representado.
-- **Azul — decisión:** bifurcación o regla de negocio.
+## 1. Mapa de pantallas
 
-El vehículo se trata como un **lente opcional**: sin vehículo se puede explorar todo; con vehículo se prioriza y señaliza, sin ocultar automáticamente lo demás.
+_Navegación_
 
-## 1. Mapa general de entrada y navegación
-
-**Épicas:** E01, E03, E04, E06, E08, E21, E54.
+El camino principal de una compra, de la portada al pedido.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    A[Entrada a la tienda] --> B[Home]
-    B --> C{¿Qué quiere hacer?}
-    C -->|Sabe qué busca| D[Buscar por nombre o referencia]
-    C -->|Quiere explorar| E[Catálogo y categorías]
-    C -->|Conoce su vehículo| F[Identificar o activar vehículo]
-    C -->|No sabe qué pieza necesita| G[Solicitar asesoría]
-
-    D --> H[Resultados de búsqueda]
-    E --> I[Listado filtrable]
-    F --> J[Vehículo activo como lente]
-    J --> H
-    J --> I
-    G --> K[Formulario de asesoría con contexto]
-
-    H --> L[Ficha de producto]
-    I --> L
-    L --> M[Compatibilidad, stock y complementos]
-    M --> N[Agregar al carrito]
-    N --> O[Carrito y checkout]
-
-    class B,D,E,F,H,I,J,L,M,N,O functional;
-    class G,K simulated;
-    class C decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    H["Inicio"] --> C["Catálogo"]
+    H --> S["Búsqueda"]
+    H --> F["Ficha de producto"]
+    C --> F
+    S --> F
+    F --> K["Carrito"]
+    K --> P["Pedido confirmado"]:::end1
+    P --> A["Mi cuenta"]
+    A -->|"volver a pedir"| K
 ```
 
-## 2. Selección y gestión del vehículo
+- **Dónde se guarda todo.** Vehículo, garaje, carrito, cuentas y pedidos viven en el navegador (`localStorage`). No hay servidor: cambiar de navegador o limpiar datos los borra.
 
-**Épicas:** E07 y E08.  
-**Estado actual:** placa y VIN son simulados; selección manual y garaje funcionan con `localStorage`.
+## 2. Lo que está siempre a mano
+
+_Navegación_
+
+Siete accesos de la cabecera y el pie, disponibles en cualquier pantalla.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 24, "rankSpacing": 34}}}%%
 flowchart TD
-    A[Usuario abre selector] --> B{Método}
-    B -->|Placa| C[Ingresar placa]
-    B -->|VIN| D[Ingresar VIN]
-    B -->|Manual| E[Marca, modelo, año y motor]
-
-    C --> F[Consulta simulada]
-    D --> F
-    F --> G{¿Formato válido?}
-    G -->|No| E
-    G -->|Sí| H[Mostrar vehículo encontrado]
-    H --> I{¿Confirmar?}
-    I -->|No| B
-    I -->|Sí| J[Guardar en garaje]
-    E --> K{¿Motor confirmado?}
-    K -->|Sí| J
-    K -->|No estoy seguro| L[Guardar como aproximado]
-    L --> J
-
-    J --> M[Activar vehículo]
-    M --> N[Persistir garaje y vehículo activo]
-    N --> O[Volver a la pantalla anterior]
-    O --> P[Recalcular señalización y orden]
-
-    class A,B,E,G,H,I,J,K,M,N,O,P functional;
-    class C,D,F,L simulated;
-    class B,G,I,K decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    subgraph CAB["Cabecera"]
+        direction TB
+        a1["Chip de vehículo"]:::client --> b1["Ventana: vehículo y garaje"]
+        a2["Icono de carrito"]:::client --> b2["Panel lateral del carrito"]
+        a3["Buscador"]:::client --> b3["Resultados de búsqueda"]
+        a4["Icono de cuenta"]:::client --> b4["Mi cuenta"]
+    end
+    subgraph PIE["Pie de página"]
+        direction TB
+        c1["Pedir un asesor"]:::client --> d1["Ventana: asesor"]:::sim
+        c2["Demo: registro"]:::client --> d2["Registro de solicitudes"]:::sim
+        c3["Demo: simular fallo"]:::client --> d3["Catálogo caído"]:::sim
+    end
 ```
 
-## 3. Búsqueda y descubrimiento
 
-**Épicas:** E04, E05, E07, E40 y E54.  
-**Estado actual:** búsqueda tokenizada, corrección tipográfica, sugerencias y priorización por compatibilidad funcionan sobre el catálogo local.
+## 3. Identificar mi vehículo
+
+_E01 · E08 - Placa y VIN simulados_
+
+Se digita o se elige, sin fotos. La placa viene primero.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    A[Usuario escribe consulta] --> B[Sugerencias en vivo]
-    B --> C[Enviar búsqueda]
-    C --> D[Normalizar y dividir en palabras]
-    D --> E[Separar términos de pieza, vehículo y año]
-    E --> F[Buscar y asignar relevancia]
-    F --> G{¿Hay resultados?}
-
-    G -->|Sí| H{¿Hay vehículo activo?}
-    H -->|No| I[Mostrar todos por relevancia]
-    H -->|Sí| J[Evaluar compatibilidad]
-    J --> K[Priorizar compatibles, luego sin datos]
-    K --> L{¿Filtro solo compatibles activo?}
-    L -->|No| M[Mostrar todos señalizados]
-    L -->|Sí| N[Mostrar solo compatibles confirmados]
-
-    G -->|No| O{¿Hay corrección posible?}
-    O -->|Sí| P[Proponer término corregido]
-    P --> Q[Mostrar resultados corregidos]
-    O -->|No| R[Estado sin resultados]
-    R --> S[Explorar categorías]
-    R --> T[Solicitar asesoría con consulta y vehículo]
-
-    C --> U{¿Catálogo disponible?}
-    U -->|No| V[Estado degradado y reintento]
-    V --> T
-
-    class A,B,C,D,E,F,H,I,J,K,L,M,N,O,P,Q,R,S functional;
-    class T,V simulated;
-    class G,H,L,O,U decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Quiere ver repuestos<br/>para su vehículo"]:::client --> B{"¿Cómo lo identifica?"}
+    B -->|"Placa"| P["Escribe la placa<br/>6 caracteres"]:::client
+    B -->|"VIN"| V["Escribe el VIN<br/>17 caracteres"]:::client
+    B -->|"Modelo"| M["Elige marca,<br/>modelo y año"]:::client
+    P --> R["Muestra un vehículo<br/>de ejemplo"]:::sim
+    V --> R
+    R --> C{"¿Es el suyo?"}
+    C -->|"Sí"| G["Lo guarda en el garaje<br/>y lo deja activo"]:::end1
+    C -->|"No"| M
+    M --> G
 ```
 
-> **Diferencia pendiente:** en algunos resultados el texto afirma “Mostrando resultados compatibles” aunque el sistema solo los está priorizando y el filtro exclusivo está apagado.
+- **Dónde empieza.** En el panel de la portada o en el chip de la cabecera. La ventana de la cabecera suma una pestaña "por línea", el motor opcional y Mi garaje.
+- **Si el dato no sirve.** Una placa de menos de 6 caracteres o un VIN de menos de 17 muestra un error y deja elegir otro método.
+- **Simulado.** Cualquier placa o VIN válido en largo devuelve el mismo vehículo de ejemplo. No hay consulta a RUNT ni a SIISA.
 
-## 4. Evaluación de compatibilidad
+## 4. Con un vehículo activo
 
-**Épicas:** E06, E07 y E42.  
-**Regla documental:** aplicabilidad es un dato del producto; compatibilidad es una evaluación contra el vehículo activo.
+_E07 · E08_
+
+Qué cambia en la tienda y cómo se cambia o se quita.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    A[Abrir producto o tarjeta] --> B{¿Hay vehículo activo?}
-    B -->|No| C[Mostrar aplicabilidad del producto]
-    C --> D[Invitar a identificar vehículo sin bloquear compra]
-
-    B -->|Sí| E{¿Hay datos de aplicabilidad?}
-    E -->|No| F[Estado sin datos]
-    E -->|Sí| G{¿Coinciden marca y modelo?}
-    G -->|No| H[No compatible]
-    G -->|Sí| I{¿Año dentro del rango?}
-    I -->|No| H
-    I -->|Sí| J{¿La aplicación exige motor?}
-    J -->|No| K[Compatible]
-    J -->|Sí| L{¿Motor confirmado?}
-    L -->|No| F
-    L -->|Sí y coincide| K
-    L -->|Sí y no coincide| H
-
-    K --> M[Priorizar y señalizar en verde]
-    H --> N[Mostrar motivo y alternativas]
-    F --> O[Explicar que debe verificarse]
-    N --> P[Permitir compra con confirmación]
-    O --> Q[Objetivo: advertir al agregar]
-    O --> R[Consultar con asesor]
-
-    class A,B,C,D,E,G,I,J,L,K,M,H,N,P,F,O functional;
-    class R simulated;
-    class Q pending;
-    class B,E,G,I,J,L decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    G["Vehículo activo"]:::end1 --> A["Chip en la cabecera"]
+    G --> B["Etiqueta de compatibilidad en<br/>tarjetas, ficha y carrito"]
+    G --> C["Aparece el filtro<br/>solo compatibles"]
+    A --> D{"¿Qué hace el cliente?"}
+    D -->|"Cambiar"| E["Abre la ventana y<br/>elige otro del garaje"]:::client
+    D -->|"Quitar"| F["Sigue en el garaje<br/>y se apaga el filtro"]:::client
 ```
 
-> **Brechas actuales:** el estado `unknown` se agrega al carrito sin una confirmación específica; la lista de aplicaciones puede marcar “Tu vehículo” comparando solo marca y modelo, aunque el año no coincida.
+- **Sin vehículo la tienda no se bloquea.** Se ve todo el catálogo; solo desaparecen las etiquetas de compatibilidad.
 
-## 5. Ficha de producto y decisión de compra
+## 5. Buscar un repuesto
 
-**Épicas:** E06, E07, E10, E13, E14, E29 y E55.
+_E04 · E05_
 
-```mermaid
-flowchart TD
-    A[Ficha de producto] --> B[Ver precio, IVA, stock y especificaciones]
-    B --> C[Ver compatibilidad o aplicabilidad]
-    C --> D[Ver complementos de instalación]
-    D --> E{¿Producto disponible?}
-
-    E -->|Agotado| F[Aviso de disponibilidad local]
-    F --> G[Pendiente: persistir y notificar realmente]
-
-    E -->|Disponible| H[Elegir cantidad]
-    H --> I{Estado de compatibilidad}
-    I -->|Compatible o sin vehículo| J[Agregar al carrito]
-    I -->|No compatible| K[Mostrar advertencia]
-    K --> L{¿Continuar conscientemente?}
-    L -->|No| M[Conservar ficha]
-    L -->|Sí| J
-    I -->|Sin datos| N[Actual: agregar directamente]
-    N --> O[Objetivo: advertir o consultar]
-
-    J --> P[Guardar producto y vehículo asociado]
-    P --> Q[Abrir o continuar compra]
-
-    class A,B,C,D,E,H,I,J,K,L,M,P,Q functional;
-    class F,N simulated;
-    class G,O pending;
-    class E,I,L decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
-```
-
-## 6. Complementos necesarios para la instalación
-
-**Épica:** E55.  
-**Estado actual:** mock curado de algunas relaciones; no existe fuente operativa ni dueño del dato.
+Desde el buscador de la cabecera, con ejemplos, sugerencias y corrección de tipeo.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    A[Abrir ficha] --> B{¿Hay relaciones cargadas?}
-    B -->|No| C[No afirmar que no hace falta nada]
-    C --> D{¿Instalación compleja?}
-    D -->|Sí| E[Ofrecer asesoría]
-    D -->|No| F[Continuar con producto principal]
-
-    B -->|Sí| G[Resolver productos relacionados]
-    G --> H{¿Hay vehículo activo?}
-    H -->|Sí| I[Ocultar complementos no compatibles]
-    H -->|No| J[Mostrar relaciones sin evaluación contextual]
-    I --> K[Separar por tipo]
-    J --> K
-
-    K --> L[Necesario para instalar]
-    K --> M[Se reemplaza junto]
-    K --> N[Recomendado]
-    L --> O[Explicar por qué se necesita]
-    M --> O
-    N --> O
-    O --> P[Mostrar stock y enlace a ficha]
-    P --> Q[Seleccionar disponibles]
-    Q --> R[Agregar seleccionados al carrito]
-
-    R --> S[Pendiente: administrar relaciones y medir cobertura]
-
-    class A,B,C,D,F,G,H,I,J,K,L,M,N,O,P,Q,R functional;
-    class E simulated;
-    class S pending;
-    class B,D,H decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
-```
-
-## 7. Asesoría asistida y transferencia de contexto
-
-**Épicas:** E21, E22 y E54.  
-**Estado actual:** flujo local funcional para demostración; no envía la solicitud a un canal externo.
-
-```mermaid
-flowchart TD
-    A{Punto de entrada} -->|Home| B[No sé qué repuesto necesito]
-    A -->|Búsqueda vacía| C[No encontré resultados]
-    A -->|Ficha| D[Duda de compatibilidad o complementos]
-    A -->|Servicio caído| E[Necesito ayuda ahora]
-    A -->|Footer| F[Elegir llamada, WhatsApp o correo]
-
-    B --> G[Abrir formulario]
-    C --> G
-    D --> G
-    E --> G
-    F --> G
-
-    G --> H[Describir problema con texto libre]
-    H --> I[Elegir qué contexto compartir]
-    I --> J[Vehículo, búsqueda, producto y carrito]
-    J --> K[Confirmar canal y contacto]
-    K --> L{¿Dentro del horario de ejemplo?}
-    L -->|Sí| M[Prometer respuesta breve]
-    L -->|No| N[Indicar próximo horario]
-    M --> O[Guardar solicitud en localStorage]
-    N --> O
-    O --> P[Clasificar fricción o asesoría]
-    P --> Q[Mostrar registro interno de demo]
-    Q --> R[Volver al flujo conservando vehículo y carrito]
-
-    O --> S[Pendiente: entregar a canal real]
-    S --> T[Pendiente: asesor envía producto o carrito]
-    T --> U[Pendiente: relacionar solicitud con compra]
-
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R functional;
-    class O,P,Q simulated;
-    class S,T,U pending;
-    class A,L decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
-```
-
-## 8. Carrito y checkout actual
-
-**Épicas:** E10, E11, E15 y E18.  
-**Estado actual:** pedido local pendiente; no existe pago electrónico.
-
-```mermaid
-flowchart TD
-    A[Producto agregado] --> B[Carrito persistente local]
-    B --> C[Ver líneas, cantidades y compatibilidad]
-    C --> D[Modificar o eliminar]
-    D --> E[Calcular subtotal]
-    E --> F[Aplicar regla de envío de ejemplo]
-    F --> G[Mostrar cuánto falta para envío gratis]
-    G --> H[Iniciar checkout]
-
-    H --> I[Revalidar precio, stock y referencias]
-    I --> J{¿Hay cambios?}
-    J -->|Sí| K[Mostrar modal de discrepancias]
-    K --> L{¿Actualizar carrito?}
-    L -->|No| C
-    L -->|Sí| M[Aplicar cambios]
-    M --> H
-    J -->|No| N{¿Usuario autenticado?}
-
-    N -->|No| O[Registrar o iniciar sesión]
-    N -->|Sí| P[Usar cuenta actual]
-    O --> Q[Ingresar o elegir dirección]
-    P --> Q
-    Q --> R[Mostrar ETA y tarifa plana de ejemplo]
-    R --> S[Confirmar pedido]
-    S --> T[Crear pedido local pendiente]
-    T --> U[Vaciar carrito]
-    U --> V[Página de confirmación]
-    V --> W[Mensaje: contacto posterior para coordinar pago]
-
-    class A,B,C,D,E,G,H,I,J,K,L,M,N,O,P,Q,S,T,U,V functional;
-    class F,R,W simulated;
-    class J,L,N decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
-```
-
-> **Brecha multivehículo:** el carrito asocia un vehículo a la línea, pero una misma referencia añadida para dos vehículos se fusiona por `product.id`; además, algunos snapshots no conservan el motor.
-
-## 9. Checkout objetivo documentado
-
-**Épicas:** E11, E12, E14, E15, E18, E20, E29, E34, E35, E38 y E44.  
-**Este flujo no está implementado; representa la dirección funcional que debe validarse con SIISA, PayU, Contabilidad y Logística.**
-
-```mermaid
-flowchart TD
-    A[Carrito revalidado] --> B[Identidad del comprador]
-    B --> C[Dirección de entrega]
-    C --> D[Consultar cobertura, costo y ETA]
-    D --> E{¿Hay cobertura?}
-    E -->|No| F[Explicar y ofrecer alternativa]
-    E -->|Sí| G[Elegir opción de envío]
-    G --> H[Datos de facturación]
-    H --> I{¿Comprador y facturado son distintos?}
-    I -->|Sí| J[Capturar tercero o empresa]
-    I -->|No| K[Usar datos del comprador]
-    J --> L[Revisión final]
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    A["Hace clic en el buscador"]:::client --> B["Ve ejemplos que rotan:<br/>Disco de freno Tivoli"]
+    B --> C["Escribe"]:::client
+    C --> D["Sugerencias en vivo"]
+    D -->|"Elige una"| F["Ficha o categoría"]:::end1
+    C -->|"Presiona Enter"| R{"¿Hay resultados?"}
+    R -->|"Sí"| L["Lista con compatibilidad,<br/>filtros y orden"]:::end1
+    R -->|"Con corrección"| K["Muestra el término corregido<br/>y deja buscar el original"]
     K --> L
-
-    L --> M[Crear intento de pago seguro]
-    M --> N[Redirigir a PayU]
-    N --> O{Resultado de retorno}
-    O -->|Aprobado| P[Esperar y validar webhook]
-    O -->|Rechazado| Q[Mostrar motivo recuperable]
-    O -->|Pendiente| R[Mostrar estado pendiente]
-    O -->|Cancelado| S[Conservar carrito y permitir reintento]
-
-    P --> T{¿Evento ya procesado?}
-    T -->|Sí| U[No duplicar pedido ni cobro]
-    T -->|No| V[Registrar pago]
-    V --> W[Crear o confirmar pedido en SIISA]
-    W --> X[Emitir factura]
-    X --> Y[Notificar confirmación]
-    Y --> Z[Mostrar pedido y seguimiento]
-
-    R --> AA[Actualizar al recibir webhook]
-    AA --> T
-
-    class A,B,C,G,H,I,J,K,L decision;
-    class D,F,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,AA pending;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    R -->|"No"| N["Ver el flujo siguiente"]
 ```
 
-## 10. Estado degradado del catálogo
+- **Con el catálogo caído** las sugerencias se apagan (último flujo).
 
-**Épicas:** E21, E40 y E54.
+## 6. Cuando no hay resultados
+
+_E04 · E13 - Asesor simulado_
+
+La búsqueda no termina en un callejón: ofrece salidas y deja constancia de lo que faltó.
 
 ```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
 flowchart TD
-    A[Usuario solicita catálogo, búsqueda o ficha] --> B{¿Inventario disponible?}
-    B -->|Sí| C[Mostrar contenido normal]
-    B -->|No| D[Mostrar mensaje contextual]
-    D --> E[Permitir reintento]
-    D --> F[Volver al inicio]
-    D --> G[Solicitar asesoría]
-    G --> H[Adjuntar origen: servicio caído]
-    H --> I[Guardar solicitud simulada]
-    I --> J[Pendiente: enviar al canal real]
-
-    class A,B,C,D,E,F,G,H functional;
-    class I simulated;
-    class J pending;
-    class B decision;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Búsqueda sin resultados"] --> B["Sugiere un término<br/>más general y categorías"]
+    A --> C["Registra el término,<br/>sin pedir datos personales"]
+    B --> D["Explora una categoría"]:::client
+    B --> E["Lo conseguimos por ti:<br/>pide a un asesor"]:::sim
+    X["Hay resultados, pero el filtro<br/>de compatibles los oculta"] --> Y["Aviso y botón para<br/>verlos todos"]
 ```
 
-## 11. Dependencias externas del flujo completo
+- **Demanda sin identidad.** Cada búsqueda sin resultados guarda término, fecha y vehículo activo. Se consulta agrupada en la pantalla de demo del registro.
+
+## 7. Explorar el catálogo
+
+_E02 · E03 · E05_
+
+Por categoría o completo, con filtros combinables y 8 productos por página.
 
 ```mermaid
-flowchart LR
-    UI[Frontend de tienda] --> BFF[Capa BFF y caché]
-    BFF --> SIISA[SIISA]
-    BFF --> PAYU[PayU]
-    BFF --> SHIP[Transportadora]
-    BFF --> MSG[Correo, WhatsApp o notificaciones]
-    BFF --> ANALYTICS[Analítica]
-
-    SIISA --> P[Productos y categorías]
-    SIISA --> V[Vehículos y aplicabilidad]
-    SIISA --> PR[Precios e impuestos]
-    SIISA --> ST[Inventario]
-    SIISA --> OR[Pedidos y clientes]
-
-    UI -. Prototipo actual .-> MOCK[Datos estáticos y localStorage]
-
-    class UI,MOCK simulated;
-    class BFF,SIISA,PAYU,SHIP,MSG,ANALYTICS,P,V,PR,ST,OR pending;
-
-    classDef functional fill:#dcfce7,stroke:#15803d,color:#14532d;
-    classDef simulated fill:#ffedd5,stroke:#c2410c,color:#7c2d12;
-    classDef pending fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d;
-    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a;
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    A["Entra al catálogo"]:::client --> B["Elige categoría,<br/>todos o solo compatibles"]:::client
+    B --> C["Afina con filtros:<br/>subcategoría, precio"]:::client
+    C --> D["Ordena por relevancia,<br/>precio o nombre"]:::client
+    D --> E{"¿Quedan productos?"}
+    E -->|"Sí"| F["Lista de 8 por página,<br/>filtros activos visibles"]:::end1
+    E -->|"No"| G["Dice qué filtro quitar"]
+    F --> H["Abre la ficha o<br/>agrega al carrito"]:::client
 ```
 
-## Fuentes de Notion
+- **Relevancia.** Con vehículo activo, lo compatible va primero. Lo no compatible se señala, no se oculta.
+- **En el celular** los filtros se abren en una capa a pantalla completa.
 
-- [Inicio del proyecto](https://app.notion.com/p/3c09daf513368171ab8bc1939a1ecb67)
-- [Backlog de épicas](https://app.notion.com/p/9af76042414147af9ca71aef4677fe51)
-- [Modelo conceptual de dominio](https://app.notion.com/p/3ca9daf51336818fa8f7f0202f3ab54f)
-- [Decisiones pendientes](https://app.notion.com/p/3ca9daf513368122a7b3c6c9f1148fc2)
-- [E07 · Compatibilidad](https://app.notion.com/p/3c09daf5133681eab44ef3a98fd91e26)
-- [E10 · Carrito](https://app.notion.com/p/3c09daf5133681679a10c8d5aca8ab9f)
-- [E18 · Envíos](https://app.notion.com/p/3c09daf5133681acbac6e99590816c6e)
-- [E54 · Asesoría asistida](https://app.notion.com/p/3c59daf51336812b9c53d073dc0382f7)
-- [E55 · Relaciones entre productos](https://app.notion.com/p/3c59daf5133681d9b90dc203b5ae089d)
+## 8. Cómo se decide la compatibilidad
 
-## Nota de alcance
+_E07 · E10_
 
-Notion mantiene estas épicas como **Sin empezar** porque el proyecto sigue registrado en Fase 0. Los nodos verdes de este documento indican cobertura navegable en el **prototipo**, no implementación productiva ni cierre de la épica.
+Tres resultados posibles. Sin vehículo activo no hay resultado, pero para qué vehículos sirve el repuesto siempre se ve.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef ok fill:#0f7a4d,stroke:#0f7a4d,color:#ffffff;
+    classDef no fill:#b3261e,stroke:#b3261e,color:#ffffff;
+    classDef unk fill:#8a5300,stroke:#8a5300,color:#ffffff;
+    A{"¿Hay vehículo activo?"} -->|"No"| X["Sin estado.<br/>Solo se ve para qué<br/>vehículos sirve"]
+    A -->|"Sí"| B{"¿El repuesto tiene<br/>datos de aplicación?"}
+    B -->|"No"| U["SIN CONFIRMAR"]:::unk
+    B -->|"Sí"| C{"¿Coinciden modelo<br/>y año?"}
+    C -->|"No"| N["NO COMPATIBLE"]:::no
+    C -->|"Sí"| D{"¿Pide un motor?"}
+    D -->|"No"| OK["COMPATIBLE"]:::ok
+    D -->|"Sí"| E{"¿El vehículo tiene<br/>ese motor?"}
+    E -->|"Sí, igual"| OK
+    E -->|"Sí, distinto"| N
+    E -->|"No lo indicó"| U
+```
+
+- **Dónde se ve.** Etiqueta con icono y texto en cada tarjeta; banner con el motivo en la ficha; fila marcada como tu vehículo en la tabla; estado por línea en el carrito, según el vehículo con que se agregó.
+- **Sin confirmar nunca es rechazo.** El repuesto puede servir y solo falta el dato. Se ofrece verificarlo con un asesor.
+
+## 9. Ficha de producto: qué se ve
+
+_E06 · E07 - Asesor simulado_
+
+El banner cambia según la compatibilidad; lo demás aparece siempre.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Abre la ficha"]:::client --> B{"¿Descontinuada?"}
+    B -->|"Sí"| B1["Avisa que ya no se vende<br/>y muestra alternativas"]
+    B -->|"No"| C{"¿Qué dice el banner?"}
+    C -->|"Sin vehículo"| C1["Invita a elegirlo"]
+    C -->|"Compatible"| C2["Lo confirma<br/>con el vehículo"]
+    C -->|"Sin confirmar"| C3["Explica el motivo y<br/>ofrece un asesor"]:::sim
+    C -->|"No compatible"| C4["Explica el motivo y<br/>muestra alternativas"]
+    C1 --> D["Debajo, siempre: aplicación en<br/>una frase, tabla filtrable,<br/>entrega estimada"]
+    C2 --> D
+    C3 --> D
+    C4 --> D
+```
+
+- **Pendiente de Notion.** La política de garantía y devoluciones está por definir (E19): la ficha lo dice en vez de afirmar plazos.
+
+## 10. Ficha de producto: agregar
+
+_E06 · E10 · E13 · E55 - Aviso y complementos simulados_
+
+Del stock a la advertencia de compatibilidad, hasta el carrito.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A{"¿Hay stock?"} -->|"Agotado"| B["Sin compra.<br/>Avísame: pide iniciar sesión"]:::sim
+    A -->|"Sí"| C["Elige la cantidad<br/>máximo el stock"]:::client
+    C --> D{"¿Es no compatible?"}
+    D -->|"No"| G["Agrega al carrito,<br/>anotando el vehículo"]:::end1
+    D -->|"Sí"| E["Ventana de advertencia"]
+    E -->|"Agregar igual"| G
+    E -->|"Cancelar"| F["No agrega nada"]
+    G --> H["Ofrece complementos<br/>necesarios y recomendados"]:::sim
+```
+
+- **Sin confirmar no frena.** Solo "no compatible" pide confirmación antes de agregar; "sin confirmar" se agrega sin advertencia propia.
+- **Simulado.** El aviso de disponibilidad no envía correo y los complementos son un maestro de ejemplo para pocos productos.
+
+## 11. Compra: del carrito a los datos
+
+_E10 · E11 · E18 - Valores de ejemplo_
+
+Lo que se ve y se completa antes de confirmar.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Abre el carrito"]:::client --> B["Ve cada línea con cantidad<br/>y compatibilidad"]
+    B --> C["Resumen: subtotal, envío y<br/>cuánto falta para envío gratis"]:::sim
+    C --> D["Entrega estimada y<br/>qué pasa después"]:::sim
+    D --> E["Completa los datos de envío"]:::client
+    E --> F{"¿Tiene sesión?"}
+    F -->|"No"| G["Crea cuenta o inicia sesión<br/>en el mismo formulario"]:::client
+    F -->|"Sí"| H["Elige una dirección<br/>guardada o escribe otra"]:::client
+    G --> H
+    H --> I["Confirmar pedido"]:::client
+```
+
+- **Valores de ejemplo.** Envío gratis desde $100.000, tarifa plana y entrega de 3 a 5 días hábiles son decisiones abiertas (D3, E18).
+
+## 12. Compra: confirmar el pedido
+
+_E11 · E15 · E17 - Sin pasarela de pago_
+
+Antes de crear el pedido se revisa que nada haya cambiado. No se cobra: el cliente es contactado para coordinar el pago.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Confirmar pedido"]:::client --> B{"¿Algo cambió en<br/>el catálogo?"}
+    B -->|"No"| D["Crea el pedido<br/>y vacía el carrito"]
+    D --> E["Página de confirmación"]:::end1
+    B -->|"Sí"| F["Ventana: qué cambió<br/>agotado, descontinuado,<br/>menos stock o precio"]
+    F -->|"Actualizar mi pedido"| G["Aplica los ajustes<br/>sin cobrar nada"]:::client
+    G --> A
+    F -->|"Revisar mi carrito"| H["Vuelve al carrito"]:::client
+    E --> I["Número, resumen,<br/>entrega estimada y<br/>qué pasa después"]
+    E --> J["Seguimiento del pedido"]:::sim
+```
+
+- **Lo real.** La revisión antes de confirmar, la cuenta creada en el checkout, las direcciones guardadas y el vehículo anotado en cada línea del pedido.
+
+## 13. Entrar a mi cuenta
+
+_E09 - Recuperación simulada_
+
+Iniciar sesión, crear la cuenta o recuperar la contraseña.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Entra a Mi cuenta"]:::client --> B{"¿Tiene sesión?"}
+    B -->|"Sí"| M["Menú de la cuenta"]:::end1
+    B -->|"No"| C{"¿Qué necesita?"}
+    C -->|"Iniciar sesión"| M
+    C -->|"Crear cuenta"| D["Errores por campo; si el<br/>correo existe, ofrece iniciar sesión"]
+    D --> M
+    C -->|"Olvidé la contraseña"| E["Código simulado y<br/>contraseña nueva"]:::sim
+    E --> M
+```
+
+- **Contraseñas.** Se guardan en el navegador sin cifrar: es un prototipo, no un modelo de seguridad.
+
+## 14. Dentro de mi cuenta
+
+_E16 · E17_
+
+Seis secciones; la de pedidos permite volver a pedir.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 26, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    M["Menú de la cuenta"]:::end1 --> A["Resumen"]
+    M --> B["Mis pedidos"]
+    M --> C["Datos personales"]
+    M --> D["Direcciones"]
+    M --> E["Mi garaje"]
+    M --> F["Métodos de pago"]:::sim
+    B --> B1["Filtra por vehículo<br/>y abre el detalle"]
+    B1 --> B2["Volver a pedir:<br/>agrega con precio y stock de hoy"]
+    C --> C1["Edita nombre y teléfono;<br/>cambia la contraseña<br/>con la actual"]
+    D --> D1["Agrega, edita, elimina<br/>y marca la predeterminada"]
+    F --> F1["Solo estado vacío"]:::sim
+```
+
+- **Volver a pedir.** Reintenta cada línea contra el catálogo de hoy y avisa qué no se pudo agregar y por qué.
+
+## 15. Pedir ayuda a un asesor
+
+_E54 · E21 · E22 - Simulado por completo_
+
+El mismo formulario desde siete puntos, con el contexto de donde nació la solicitud.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Pide ayuda desde<br/>uno de siete puntos"]:::client --> B["Se abre el formulario"]:::sim
+    B --> C["Elige qué compartir:<br/>vehículo, búsqueda,<br/>producto, carrito"]:::client
+    C --> D["Escribe qué necesita<br/>y elige el canal"]:::client
+    D --> E["Ve el horario<br/>de ejemplo"]:::sim
+    E --> F{"¿Contacto válido?"}
+    F -->|"No"| D
+    F -->|"Sí"| G["Se envía y se clasifica:<br/>fricción o asesoría"]:::sim
+    G --> H["Confirmación con número"]:::sim
+    H --> I["Vuelve a lo que<br/>estaba haciendo"]:::end1
+    H --> J["Queda en el<br/>registro de demo"]:::sim
+```
+
+- **Los siete puntos.** Inicio, pie de página, búsqueda sin resultados, catálogo caído, duda de compatibilidad, repuesto sin alternativas y duda de complementos.
+- **Fricción o asesoría.** Fricción es no encontrar algo o que algo falle; asesoría es necesitar criterio experto.
+- **Sin canal real.** No hay bandeja, horario real ni mensaje enviado: la solicitud solo queda guardada en el navegador.
+
+## 16. Cuando el catálogo no responde
+
+_E02 - Interruptor de demo_
+
+El pie de página trae un interruptor para mostrar este escenario.
+
+```mermaid
+%%{init: {"themeVariables": {"fontSize": "15px"}, "flowchart": {"nodeSpacing": 30, "rankSpacing": 38}}}%%
+flowchart TD
+    classDef client fill:#5b4fa3,stroke:#5b4fa3,color:#ffffff;
+    classDef end1 stroke:#1a9d68,stroke-width:3px;
+    classDef sim stroke-dasharray: 5 4,stroke:#d08a1f,stroke-width:2px;
+    A["Activa el interruptor<br/>del pie de página"]:::sim --> B{"¿En qué pantalla está?"}
+    B -->|"Inicio"| C["Los destacados muestran un<br/>mensaje; el resto sigue igual"]
+    B -->|"Buscador"| E["Sin sugerencias"]
+    B -->|"Catálogo, búsqueda o ficha"| D["Aviso: no pudimos<br/>completar la operación"]
+    D --> F["Reintentar<br/>recarga la página"]:::client
+    D --> G["Pedir un asesor"]:::sim
+    D --> J["Ir al inicio"]:::client
+    F --> H{"¿Sigue la falla?"}
+    H -->|"Sí"| D
+    H -->|"No"| I["Vuelve el contenido"]:::end1
+```
+
+- **Origen.** La épica E40 no tiene historias escritas en Notion; este comportamiento se apoya en HU-E02-04 (saber que el catálogo no está disponible).
+
+---
+
+**Fuera de este mapa, a propósito:** pago real (PayU), conexión con SIISA, correos, back-office, política de garantía y devoluciones (E19), fidelización (E23), promociones y reseñas. No existen en el prototipo.
+
+Donde difiera de las historias de usuario o del modelo conceptual de Notion, esos documentos mandan.

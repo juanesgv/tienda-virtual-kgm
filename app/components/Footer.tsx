@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="footer-content">
         <div className="footer-brand">
           <BrandLogo size="footer" variant="white" />
-          <p>Tienda oficial de repuestos genuinos KGM en Colombia. Compatible con vehículos SsangYong.</p>
+          <p>Tienda oficial de repuestos genuinos KGM en Colombia. Para vehículos KGM (antes SsangYong).</p>
         </div>
         <div className="footer-links">
           <div className="footer-column">

@@ -15,7 +15,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 export const metadata = {
   title: "KGM Repuestos | Tienda oficial Colombia",
   description:
-    "Tienda oficial de repuestos KGM. Explora nuestro catálogo completo de repuestos genuinos compatibles con SsangYong y KGM.",
+    "Tienda oficial de repuestos KGM. Explora nuestro catálogo completo de repuestos genuinos para vehículos KGM (antes SsangYong).",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

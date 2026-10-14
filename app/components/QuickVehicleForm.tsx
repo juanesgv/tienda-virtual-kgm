@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVehicle, Vehicle } from "../context/VehicleContext";
-import { simulatePlateLookup, simulateVinLookup, VEHICLE_CATALOG, YEARS } from "./VehicleModal";
+import { simulatePlateLookup, simulateVinLookup, VEHICLE_BRAND, VEHICLE_MODELS, YEARS } from "./VehicleModal";
 
 type Method = "placa" | "modelo" | "vin";
 
@@ -15,7 +15,7 @@ const METHODS: { id: Method; label: string }[] = [
 ];
 
 // Identificador rápido de la portada (HU-E01-02 / HU-E08-01 / HU-E08-02): el cliente escribe o elige, sin pasar por
-// fotos ni por el modal. La placa es el método por defecto; el modelo (marca, modelo, año) es para quien no la tiene
+// fotos ni por el modal. La placa es el método por defecto; el modelo (modelo y año, sin preguntar marca) es para quien no la tiene
 // a mano; el VIN está disponible pero es el de menor uso (17 caracteres). Placa y VIN son búsquedas SIMULADAS:
 // nunca llaman a RUNT ni a SIISA. Sin motor, la compatibilidad queda "sin confirmar".
 export default function QuickVehicleForm() {
@@ -26,10 +26,8 @@ export default function QuickVehicleForm() {
   const [vin, setVin] = useState("");
   const [pending, setPending] = useState<Vehicle | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
-  const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
-  const models = useMemo(() => (brand ? VEHICLE_CATALOG[brand] ?? [] : []), [brand]);
 
   const goToCompatible = () => router.push("/repuestos?compatible=true");
 
@@ -63,8 +61,8 @@ export default function QuickVehicleForm() {
 
   const saveModel = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand || !model || !year) return;
-    setVehicle({ brand, model, year: parseInt(year), approximateMatch: true });
+    if (!model || !year) return;
+    setVehicle({ brand: VEHICLE_BRAND, model, year: parseInt(year), approximateMatch: true });
     goToCompatible();
   };
 
@@ -120,25 +118,6 @@ export default function QuickVehicleForm() {
         <form onSubmit={saveModel} className="quick-vehicle-form">
           <div className="quick-vehicle-fields">
             <div className="form-group">
-              <label htmlFor="qv-brand">Marca</label>
-              <select
-                id="qv-brand"
-                value={brand}
-                onChange={(e) => {
-                  setBrand(e.target.value);
-                  setModel("");
-                  setYear("");
-                }}
-              >
-                <option value="">Elige</option>
-                {Object.keys(VEHICLE_CATALOG).map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
               <label htmlFor="qv-model">Modelo</label>
               <select
                 id="qv-model"
@@ -147,10 +126,9 @@ export default function QuickVehicleForm() {
                   setModel(e.target.value);
                   setYear("");
                 }}
-                disabled={!brand}
               >
                 <option value="">Elige</option>
-                {models.map((m) => (
+                {VEHICLE_MODELS.map((m) => (
                   <option key={m} value={m}>
                     {m}
                   </option>
@@ -170,7 +148,7 @@ export default function QuickVehicleForm() {
             </div>
           </div>
           <div className="vehicle-panel-actions">
-            <button type="submit" className="btn-main" disabled={!brand || !model || !year}>
+            <button type="submit" className="btn-main" disabled={!model || !year}>
               Ver repuestos compatibles
             </button>
           </div>
