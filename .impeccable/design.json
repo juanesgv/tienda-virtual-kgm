@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-07T00:00:00.000Z",
+  "title": "Design System: KGM Repuestos",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Morado SsangYong", "canonical": "#3F3954", "tonalRamp": ["#1A1722", "#2D2840", "#3F3954", "#5A5372", "#77718E", "#9C97AF", "#C4C1D0", "#E9E8EE"] },
+      "primary-dark": { "role": "primary", "displayName": "Morado profundo", "canonical": "#2D2840", "tonalRamp": ["#1A1722", "#2D2840", "#3F3954", "#5A5372", "#77718E", "#9C97AF", "#C4C1D0", "#E9E8EE"] },
+      "ink-dark": { "role": "secondary", "displayName": "Tinta de pie", "canonical": "#111827", "tonalRamp": ["#111827", "#1F2937", "#374151", "#4B5563", "#5F6672", "#9CA3AF", "#D1D5DB", "#F5F6F8"] },
+      "success": { "role": "semantic", "displayName": "Verde compatible", "canonical": "#0F7A4D", "tonalRamp": ["#063D27", "#0A5C3A", "#0F7A4D", "#3A9870", "#6AB394", "#9CCDB7", "#C9E5D8", "#E8F5E9"] },
+      "warning": { "role": "semantic", "displayName": "Ámbar verificar", "canonical": "#8A5300", "tonalRamp": ["#472A00", "#693E00", "#8A5300", "#A97420", "#C4964F", "#DBB885", "#EDD7B8", "#FFF3E0"] },
+      "error": { "role": "semantic", "displayName": "Rojo no compatible", "canonical": "#B3261E", "tonalRamp": ["#5C120F", "#851C16", "#B3261E", "#C75048", "#D8807A", "#E6AEAA", "#F2D3D1", "#FFEBEE"] },
+      "gray-100": { "role": "neutral", "displayName": "Gris fondo", "canonical": "#F5F6F8", "tonalRamp": ["#111827", "#1F2937", "#374151", "#4B5563", "#5F6672", "#9CA3AF", "#E7E9ED", "#F5F6F8"] },
+      "white": { "role": "neutral", "displayName": "Blanco", "canonical": "#FFFFFF", "tonalRamp": ["#111827", "#374151", "#5F6672", "#9CA3AF", "#D1D5DB", "#E7E9ED", "#F5F6F8", "#FFFFFF"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Títulos de página, panel de vehículo, nombre y precio en ficha (28px/700)." },
+      "title": { "displayName": "Title", "purpose": "Encabezados de sección y precio en tarjeta (20px/700)." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido, nombre en tarjeta, botones (16px)." },
+      "body-sm": { "displayName": "Body small", "purpose": "Navegación, metadatos, stock, apoyo (14px)." },
+      "label": { "displayName": "Label", "purpose": "SKU, insignias de compatibilidad, contador (12px/600)." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 2px rgba(17, 24, 39, 0.06)", "purpose": "Definida, reservada; sin uso confirmado." },
+      { "name": "shadow-md", "value": "0 4px 12px rgba(17, 24, 39, 0.08)", "purpose": "Sugerencias de búsqueda y hover de tarjetas." },
+      { "name": "shadow-lg", "value": "0 12px 32px rgba(17, 24, 39, 0.12)", "purpose": "Modales." }
+    ],
+    "motion": [
+      { "name": "color-transition", "value": "0.2s (background-color, border-color, color)", "purpose": "Único cambio en hover de botones; sin desplazamientos. prefers-reduced-motion anula transform y scroll suave." }
+    ],
+    "breakpoints": [
+      { "name": "xl", "value": "1080px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "md", "value": "900px" },
+      { "name": "md-2", "value": "768px" },
+      { "name": "sm", "value": "600px" },
+      { "name": "xs", "value": "480px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal (.btn-main / .btn-primary).",
+      "html": "<button class=\"ds-btn-primary\">Continuar al pago</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 24px; font-family: inherit; font-size: 16px; font-weight: 600; line-height: 1.2; color: #fff; background: var(--color-primary, #3F3954); border: 1px solid var(--color-primary, #3F3954); border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; } .ds-btn-primary:hover { background: var(--color-primary-dark, #2D2840); border-color: var(--color-primary-dark, #2D2840); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-primary, #3F3954); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria (.btn-secondary / .btn-outline): blanco con borde gris.",
+      "html": "<button class=\"ds-btn-secondary\">Cambiar vehículo</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 24px; font-family: inherit; font-size: 16px; font-weight: 600; line-height: 1.2; color: #1F2937; background: #fff; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s; } .ds-btn-secondary:hover { background: #F5F6F8; border-color: #9CA3AF; color: #111827; } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-primary, #3F3954); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Buscador global: campo de 44px con botón morado a la derecha.",
+      "html": "<div class=\"ds-search\"><input class=\"ds-input\" type=\"text\" placeholder=\"Buscar repuesto, SKU o referencia\" /><button class=\"ds-search-btn\" aria-label=\"Buscar\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M20 20l-3.5-3.5\"/></svg></button></div>",
+      "css": ".ds-search { position: relative; max-width: 720px; } .ds-input { width: 100%; height: 44px; padding: 0 56px 0 16px; font-family: inherit; font-size: 14px; color: #111827; background: #fff; border: 1px solid #D1D5DB; border-radius: 6px; } .ds-input:focus-visible { outline: 2px solid var(--color-primary, #3F3954); outline-offset: 1px; border-color: var(--color-primary, #3F3954); } .ds-search-btn { position: absolute; top: 0; right: 0; bottom: 0; width: 48px; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--color-primary, #3F3954); border: none; border-radius: 0 6px 6px 0; cursor: pointer; } .ds-search-btn:hover { background: var(--color-primary-dark, #2D2840); }"
+    },
+    {
+      "name": "Main Navigation Item",
+      "kind": "nav",
+      "refersTo": "none",
+      "description": "Ítem de navegación principal: 48px, activo con subrayado morado de 3px.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\">Frenos</a><a class=\"ds-nav-item ds-active\" href=\"#\">Motor</a><a class=\"ds-nav-item\" href=\"#\">Suspensión</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 4px; border-top: 1px solid #E7E9ED; background: #fff; } .ds-nav-item { display: flex; align-items: center; min-height: 48px; padding: 0 16px; font-family: inherit; font-size: 14px; font-weight: 500; color: #374151; text-decoration: none; border-bottom: 3px solid transparent; transition: color 0.2s, border-color 0.2s; } .ds-nav-item:hover { color: var(--color-primary, #3F3954); } .ds-nav-item.ds-active { color: var(--color-primary, #3F3954); border-bottom-color: var(--color-primary, #3F3954); } .ds-nav-item:focus-visible { outline: 2px solid var(--color-primary, #3F3954); outline-offset: 2px; }"
+    },
+    {
+      "name": "Compatibility Badge",
+      "kind": "chip",
+      "refersTo": "badge-compatible",
+      "description": "Insignia de tres estados: compatible, verificar, no compatible. Color semántico más icono y texto.",
+      "html": "<span class=\"ds-badge ds-ok\">Compatible</span> <span class=\"ds-badge ds-verify\">Verificar compatibilidad</span> <span class=\"ds-badge ds-no\">No compatible</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.3; border-radius: 4px; } .ds-ok { background: #E8F5E9; color: #0F7A4D; } .ds-verify { background: #FFF3E0; color: #8A5300; } .ds-no { background: #FFEBEE; color: #B3261E; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "product-card",
+      "description": "Tarjeta de producto: borde de 1px, imagen 4:3, insignia, SKU, nombre, stock y precio con botón.",
+      "html": "<article class=\"ds-card\"><span class=\"ds-badge ds-ok ds-card-badge\">Compatible</span><div class=\"ds-card-img\"></div><div class=\"ds-card-info\"><span class=\"ds-sku\">SKU 12345</span><a class=\"ds-card-name\" href=\"#\">Pastillas de freno delanteras</a><span class=\"ds-stock\">En stock</span><div class=\"ds-card-foot\"><span class=\"ds-price\">$ 189.900</span><button class=\"ds-add\">Agregar</button></div></div></article>",
+      "css": ".ds-card { position: relative; display: flex; flex-direction: column; width: 260px; background: #fff; border: 1px solid #E7E9ED; border-radius: 8px; overflow: hidden; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; } .ds-card:hover { border-color: #D1D5DB; box-shadow: 0 4px 12px rgba(17,24,39,0.08); } .ds-card-badge { position: absolute; top: 12px; left: 12px; display: inline-flex; padding: 4px 8px; font-size: 12px; font-weight: 600; border-radius: 4px; background: #E8F5E9; color: #0F7A4D; } .ds-card-img { aspect-ratio: 4 / 3; background: #F5F6F8; } .ds-card-info { display: flex; flex-direction: column; gap: 4px; padding: 16px; } .ds-sku { font-size: 12px; color: #5F6672; font-variant-numeric: tabular-nums; } .ds-card-name { min-height: 44px; font-size: 16px; font-weight: 600; line-height: 1.35; color: #111827; text-decoration: none; } .ds-card-name:hover { color: var(--color-primary, #3F3954); } .ds-stock { font-size: 14px; color: #0F7A4D; } .ds-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E7E9ED; } .ds-price { font-size: 20px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; } .ds-add { min-height: 44px; padding: 0 16px; font-family: inherit; font-size: 14px; font-weight: 600; color: #fff; background: var(--color-primary, #3F3954); border: none; border-radius: 6px; cursor: pointer; } .ds-add:hover { background: var(--color-primary-dark, #2D2840); } .ds-add:focus-visible, .ds-card-name:focus-visible { outline: 2px solid var(--color-primary, #3F3954); outline-offset: 2px; }"
+    },
+    {
+      "name": "Compatibility Banner",
+      "kind": "custom",
+      "refersTo": "compatibility-banner",
+      "description": "Banner de ficha de producto: borde completo de 1px, fondo suave, icono y título semánticos.",
+      "html": "<div class=\"ds-banner\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v5M12 16h.01\"/></svg><div><div class=\"ds-banner-title\">Verificar compatibilidad</div><div class=\"ds-banner-text\">Aún no podemos confirmar que esta pieza sirva para tu vehículo.</div></div></div>",
+      "css": ".ds-banner { display: flex; align-items: flex-start; gap: 12px; padding: 16px; font-family: inherit; background: #FFF3E0; border: 1px solid #EBCB9B; border-radius: 8px; color: #8A5300; } .ds-banner svg { flex-shrink: 0; margin-top: 2px; } .ds-banner-title { font-size: 16px; font-weight: 700; color: #8A5300; } .ds-banner-text { margin-top: 4px; font-size: 14px; line-height: 1.5; color: #374151; }"
+    },
+    {
+      "name": "Vehicle Panel",
+      "kind": "card",
+      "refersTo": "none",
+      "description": "Panel de inicio que pone el vehículo como punto de partida: blanco, borde 1px, esquina 8px.",
+      "html": "<section class=\"ds-panel\"><h1>Encuentra el repuesto para tu vehículo</h1><p>Elige tu vehículo y te mostramos lo que le sirve.</p><div class=\"ds-panel-actions\"><button class=\"ds-p-main\">Elegir vehículo</button><button class=\"ds-p-sec\">Buscar sin vehículo</button></div></section>",
+      "css": ".ds-panel { display: flex; flex-direction: column; gap: 16px; padding: 32px; font-family: inherit; background: #fff; border: 1px solid #E7E9ED; border-radius: 8px; } .ds-panel h1 { font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; color: #111827; text-wrap: balance; } .ds-panel p { max-width: 60ch; font-size: 16px; line-height: 1.6; color: #4B5563; } .ds-panel-actions { display: flex; flex-wrap: wrap; gap: 12px; } .ds-p-main, .ds-p-sec { min-height: 44px; padding: 0 24px; font-family: inherit; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; } .ds-p-main { color: #fff; background: #3F3954; border: 1px solid #3F3954; } .ds-p-main:hover { background: #2D2840; } .ds-p-sec { color: #1F2937; background: #fff; border: 1px solid #D1D5DB; } .ds-p-sec:hover { background: #F5F6F8; border-color: #9CA3AF; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El mostrador del almacén",
+    "overview": "Es una tienda de repuestos que se comporta como la categoría espera: densa, legible, previsible. Se ejecuta el estándar de Mercado Libre Colombia y Sodimac con oficio, sin giros estilísticos ni disfraz de otro mundo. La confianza viene de que cada cosa está donde se espera, de que el vehículo del cliente acompaña la pantalla y de que el color solo se usa cuando dice algo.\n\nLa superficie es blanca sobre un fondo gris frío (#F5F6F8); los contenedores se separan con bordes de 1px, no con sombras. Hay un solo color de acción, el morado oscuro del logo SsangYong. Verde, ámbar y rojo no son decoración: significan compatibilidad (compatible, sin confirmar, no compatible) y estado de stock o pedido. El tono es sobrio y de uso rápido, pensado para celular y para el taller que compra varias piezas.",
+    "keyCharacteristics": [
+      "Una sola familia tipográfica (Inter) en cinco tamaños.",
+      "Un solo color de acción; color semántico reservado.",
+      "Bordes de 1px en lugar de sombras; la sombra aparece en superposiciones y como respuesta al cursor en tarjetas.",
+      "Objetivos táctiles de 44px como mínimo; foco visible en todo.",
+      "Contenedor de 1400px, rejillas que se adaptan con auto-fill."
+    ],
+    "rules": [
+      { "name": "The Reserved Signal Rule", "body": "Verde, ámbar y rojo solo comunican compatibilidad y estado de stock o pedido. Nunca para decorar, para marcar una categoría ni para acciones.", "section": "colors" },
+      { "name": "The One Action Color Rule", "body": "Todo lo que se puede pulsar o está seleccionado usa el morado primario; lo secundario es blanco con borde gris.", "section": "colors" },
+      { "name": "The Never Alone Rule", "body": "Un estado nunca se comunica solo con color: va con icono y texto (\"Compatible\", \"Verificar compatibilidad\", \"No compatible\").", "section": "colors" },
+      { "name": "The Five Steps Rule", "body": "Los tamaños nuevos salen de 12 / 14 / 16 / 20 / 28. Los títulos grandes llevan text-wrap: balance.", "section": "typography" },
+      { "name": "The 44 Rule", "body": "Nada pulsable mide menos de 44px en su lado menor.", "section": "layout" },
+      { "name": "The Border Before Shadow Rule", "body": "En reposo, la separación es un borde de 1px. Una sombra nueva solo se justifica en una superposición o como respuesta a hover.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar --color-primary (#3F3954) solo para acciones y selección.",
+      "Do expresar los tres estados de compatibilidad con color semántico, icono y texto; \"sin confirmar\" va en ámbar y nunca como rechazo.",
+      "Do separar superficies con bordes de 1px (gray-200) y esquinas de 8px.",
+      "Do mantener 44px mínimos en todo lo pulsable y el anillo de foco de 2px con desfase de 2px (blanco sobre el pie).",
+      "Do usar los tokens --space-* y --text-* en reglas nuevas.",
+      "Do atenuar la imagen de lo no compatible, no su texto."
+    ],
+    "donts": [
+      "Don't usar verde, ámbar o rojo fuera de compatibilidad y estado de stock o pedido.",
+      "Don't usar gray-400 como color de texto sobre blanco (no llega a 4.5:1).",
+      "Don't añadir sombras en reposo ni bordes laterales gruesos como acento.",
+      "Don't introducir una segunda familia tipográfica ni tamaños fuera de la escala.",
+      "Don't presentar datos simulados (SIISA, PayU, envío, asesoría) como reales."
+    ]
+  }
+}

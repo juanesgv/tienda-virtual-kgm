@@ -1,30 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { getProductById, formatPrice, isProductCompatible } from "../../data/products";
+import { getProductById, formatPrice, getCompatibilityStatus, getCompatibilityDetail } from "../../data/products";
 import { useVehicle } from "../../context/VehicleContext";
 import { useCart } from "../../context/CartContext";
+import { useUser } from "../../context/UserContext";
 import VehicleModal from "../../components/VehicleModal";
 import ProductCard from "../../components/ProductCard";
+import IncompatibleAddModal from "../../components/IncompatibleAddModal";
+import ProductComplements from "../../components/ProductComplements";
+import VehicleApplicability from "../../components/VehicleApplicability";
+import { useEstimatedDelivery } from "../../lib/useEstimatedDelivery";
+import ServiceUnavailable from "../../components/ServiceUnavailable";
 import { products } from "../../data/products";
+import { useServiceStatus } from "../../context/ServiceStatusContext";
+import { useAdvisor } from "../../context/AdvisorContext";
+import { FREE_SHIPPING_THRESHOLD } from "../../data/shipping";
+import { WARRANTY_AND_RETURNS_SUMMARY, WARRANTY_AND_RETURNS_VALUE } from "../../data/policies";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { vehicle, isVehicleSaved } = useVehicle();
+  const { openAdvisor } = useAdvisor();
   const { addToCart } = useCart();
+  const { isAuthenticated } = useUser();
+  const { isInventoryDown } = useServiceStatus();
+  const delivery = useEstimatedDelivery();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("descripcion");
   const [quantity, setQuantity] = useState(1);
   const [mainImageError, setMainImageError] = useState(false);
+  const [notifyRequested, setNotifyRequested] = useState(false);
+  const [addedNotice, setAddedNotice] = useState<string | null>(null);
+  const [showIncompatibleConfirm, setShowIncompatibleConfirm] = useState(false);
 
   const product = getProductById(params.id as string);
+
+  // Al navegar entre productos, no arrastrar la cantidad/estado del producto anterior
+  useEffect(() => {
+    setQuantity(1);
+    setNotifyRequested(false);
+    setAddedNotice(null);
+  }, [product?.id]);
 
   // Productos relacionados (misma categoría, excluyendo el actual)
   const relatedProducts = products
     .filter((p) => p.category === product?.category && p.id !== product?.id)
     .slice(0, 3);
+
+  // HU-E02-04: si el inventario está caído, ni siquiera podemos confirmar si el producto existe (E40 no tiene historias en Notion)
+  if (isInventoryDown) {
+    return (
+      <ServiceUnavailable
+        title="No pudimos cargar este repuesto"
+        description="Estamos teniendo problemas para conectarnos con el sistema de inventario. Intenta de nuevo en unos minutos."
+      />
+    );
+  }
 
   if (!product) {
     return (
@@ -37,7 +71,77 @@ export default function ProductDetailPage() {
     );
   }
 
-  const isCompatible = vehicle ? isProductCompatible(product, vehicle) : false;
+  // HU-E13-01: referencia descontinuada — accesible por enlace directo, pero no se vende
+  if (product.discontinued) {
+    const sameCategoryAlternatives = products.filter((p) => p.category === product.category).slice(0, 3);
+    return (
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "60px 24px", textAlign: "center" }}>
+        <h1>Esta referencia ya no está disponible</h1>
+        <p style={{ color: "var(--color-gray-600)", marginTop: "12px", marginBottom: "32px" }}>
+          <strong>{product.name} ({product.sku})</strong> fue descontinuada y ya no se vende. Si buscabas este
+          repuesto para tu vehículo, aquí tienes otras opciones de la misma categoría.
+        </p>
+        {sameCategoryAlternatives.length > 0 && (
+          <div className="products-grid" style={{ marginBottom: "32px" }}>
+            {sameCategoryAlternatives.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
+        <Link href="/repuestos" className="btn-main">
+          Ver todos los repuestos
+        </Link>
+      </div>
+    );
+  }
+
+  // HU-E07-02: 3 estados — compatible / no compatible / sin confirmar (nunca se trata como rechazo)
+  // El motivo viene del dato (año, motor, aplicabilidad), no de una etiqueta: así el cliente ve por qué.
+  const compatibilityDetail = vehicle ? getCompatibilityDetail(product, vehicle) : null;
+  const compatibilityStatus = compatibilityDetail?.status ?? null;
+  const isCompatible = compatibilityStatus === "compatible";
+  const isUnknownCompatibility = compatibilityStatus === "unknown";
+  const reasonText = (() => {
+    switch (compatibilityDetail?.reason) {
+      case "no_data":
+        return "Todavía no hay información de aplicabilidad cargada para este repuesto.";
+      case "engine_unconfirmed":
+        return "Aplica a tu modelo y año, pero depende del motor y no has indicado el tuyo.";
+      case "year_out_of_range":
+        return `Este repuesto aplica a ${compatibilityDetail.applicableYears}; tu vehículo es ${vehicle?.year}.`;
+      case "engine_mismatch":
+        return "Aplica a tu modelo y año, pero con otro motor.";
+      case "model_not_listed":
+        return "Tu modelo no está entre los vehículos a los que aplica.";
+      default:
+        return null;
+    }
+  })();
+
+  // Una fila de aplicabilidad es "tu vehículo" solo si de verdad aplica (modelo, año y motor), no solo por marca y modelo
+  const entryAppliesToVehicle = (entry: (typeof product.compatibleVehicles)[number]) =>
+    !!vehicle && getCompatibilityStatus({ ...product, compatibleVehicles: [entry] }, vehicle) === "compatible";
+
+  // HU-E07-04: si este repuesto no sirve para el vehículo, ofrecer alternativas que sí sirvan
+  const compatibleAlternatives =
+    compatibilityStatus === "not_compatible" && vehicle
+      ? products
+          .filter((p) => p.category === product.category && p.id !== product.id && getCompatibilityStatus(p, vehicle) === "compatible")
+          .slice(0, 3)
+      : [];
+  const showingAlternatives = compatibilityStatus === "not_compatible" && compatibleAlternatives.length > 0;
+  const displayedRelatedProducts = showingAlternatives ? compatibleAlternatives : relatedProducts;
+
+  const performAddToCart = () => {
+    // HU-E17-03: la asociación producto-vehículo nace aquí, en el momento de agregar al carrito
+    const vehicleSnapshot = isVehicleSaved && vehicle ? { brand: vehicle.brand, model: vehicle.model, year: vehicle.year } : undefined;
+    const result = addToCart(product, quantity, vehicleSnapshot);
+    setAddedNotice(
+      result.limitedTo
+        ? `Tu carrito llegó al máximo disponible de este repuesto (${result.limitedTo} ${result.limitedTo === 1 ? "unidad" : "unidades"}).`
+        : `${quantity} ${quantity === 1 ? "unidad agregada" : "unidades agregadas"} al carrito.`
+    );
+  };
 
   return (
     <>
@@ -75,53 +179,57 @@ export default function ProductDetailPage() {
               )}
             </div>
           </div>
-          <div className="thumbnail-list">
-            <button className="thumb active">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 1`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
-                </svg>
-              )}
-            </button>
-            <button className="thumb">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 2`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              )}
-            </button>
-            <button className="thumb">
-              {product.image ? (
-                <img src={product.image} alt={`${product.name} - vista 3`} />
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              )}
-            </button>
-          </div>
         </div>
 
         {/* Info del Producto */}
         <div className="product-info-detail">
-          {/* Banner de compatibilidad */}
+          {/* Banner de compatibilidad: 3 estados reales */}
           {isVehicleSaved && (
-            <div className={`compatibility-banner ${isCompatible ? "compatible" : "not-compatible"}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-                <path d={isCompatible ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" : "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"} />
+            <div className={`compatibility-banner ${isCompatible ? "compatible" : isUnknownCompatibility ? "unknown" : "not-compatible"}`}>
+              {/* Un icono distinto por estado (check, interrogación, X): no depende solo del color */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true">
+                <path
+                  d={
+                    isCompatible
+                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                      : isUnknownCompatibility
+                      ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                      : "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"
+                  }
+                />
               </svg>
-              <div className="banner-content">
-                <span className="banner-title">
-                  {isCompatible ? "Compatible con tu vehículo" : "No compatible con tu vehículo"}
+              <div className="compat-banner-content">
+                <span className="compat-banner-title">
+                  {isCompatible
+                    ? "Compatible con tu vehículo"
+                    : isUnknownCompatibility
+                    ? "Debe verificarse con tu vehículo"
+                    : "No compatible con tu vehículo"}
                 </span>
-                <span className="banner-text">
-                  Este repuesto {isCompatible ? "es compatible" : "no es compatible"} con tu{" "}
-                  <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
+                <span className="compat-banner-text">
+                  {isCompatible && (
+                    <>Este repuesto es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.</>
+                  )}
+                  {isUnknownCompatibility && (
+                    <>
+                      No tenemos confirmado si este repuesto sirve para tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
+                      No significa que no sea compatible — significa que aún debe verificarse. {reasonText}
+                    </>
+                  )}
+                  {!isCompatible && !isUnknownCompatibility && (
+                    <>Este repuesto no es compatible con tu <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>. {reasonText}</>
+                  )}
                 </span>
+                {/* E54: si la compatibilidad no está confirmada, ofrecer a un asesor sin salir de la ficha */}
+                {!isCompatible && (
+                  <button
+                    type="button"
+                    className="btn-secondary compat-banner-action"
+                    onClick={() => openAdvisor({ origin: "product_compat", product: { id: product.id, name: product.name, sku: product.sku } })}
+                  >
+                    Confirmar compatibilidad con un asesor
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -145,62 +253,128 @@ export default function ProductDetailPage() {
             <span className="price-note">IVA incluido</span>
           </div>
 
-          <div className="product-stock">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          <div className={`product-stock stock-${product.stock}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+              {product.stock === "out_of_stock" ? (
+                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" />
+              ) : product.stock === "low_stock" ? (
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+              ) : (
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              )}
             </svg>
             <span>
               {product.stock === "in_stock"
-                ? "En stock - Disponible para envío inmediato"
+                ? "En stock - Disponible"
                 : product.stock === "low_stock"
-                ? "Pocos disponibles"
+                ? product.stockQuantity
+                  ? `Pocos disponibles - quedan ${product.stockQuantity} unidades`
+                  : "Pocos disponibles"
                 : "Agotado"}
             </span>
           </div>
 
-          <div className="product-actions">
-            <div className="quantity-selector">
-              <button className="qty-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-                -
-              </button>
-              <input type="number" value={quantity} min="1" readOnly />
-              <button className="qty-btn" onClick={() => setQuantity(quantity + 1)}>
-                +
+          {/* HU-E11-02/E18: entrega estimada con fechas, visible antes de agregar al carrito (valor de ejemplo) */}
+          {product.stock !== "out_of_stock" && delivery && (
+            <p className="product-delivery-detail">
+              <strong>Entrega estimada:</strong> {delivery.long}.{" "}
+              <span className="simulated-badge">Valor de ejemplo · depende de la transportadora (E18)</span>
+            </p>
+          )}
+
+          {/* HU-E06-01/E06-04/E13-01/E13-02: sin stock no se puede agregar; la cantidad no puede superar lo disponible */}
+          {product.stock !== "out_of_stock" ? (
+            <div className="product-actions">
+              <div className="quantity-selector">
+                <button
+                  type="button"
+                  className="qty-btn"
+                  aria-label="Disminuir cantidad"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <input type="number" value={quantity} min="1" readOnly aria-label="Cantidad" />
+                <button
+                  type="button"
+                  className="qty-btn"
+                  aria-label="Aumentar cantidad"
+                  onClick={() => setQuantity((q) => (product.stockQuantity ? Math.min(product.stockQuantity, q + 1) : q + 1))}
+                  disabled={!!product.stockQuantity && quantity >= product.stockQuantity}
+                >
+                  +
+                </button>
+              </div>
+              <button
+                className="btn-add-to-cart"
+                onClick={() => {
+                  // HU-E10-04: pedir confirmación antes de agregar un repuesto no compatible
+                  if (compatibilityStatus === "not_compatible") {
+                    setShowIncompatibleConfirm(true);
+                    return;
+                  }
+                  performAddToCart();
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+                </svg>
+                Agregar al carrito
               </button>
             </div>
-            <button
-              className="btn-add-to-cart"
-              onClick={() => {
-                if (product) {
-                  addToCart(product, quantity);
-                }
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
-              </svg>
-              Agregar al carrito
-            </button>
-          </div>
+          ) : (
+            // HU-E13-03: producto agotado — ofrecer avisar cuando vuelva a haber stock
+            <div className="product-actions out-of-stock-actions">
+              {!notifyRequested ? (
+                isAuthenticated ? (
+                  <button className="btn-add-to-cart" onClick={() => setNotifyRequested(true)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                      <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                    </svg>
+                    Avísame cuando esté disponible
+                  </button>
+                ) : (
+                  <div className="notify-login-hint">
+                    <p>Este repuesto está agotado. Inicia sesión para que te avisemos cuando vuelva a haber stock.</p>
+                    <Link href="/cuenta" className="btn-outline">
+                      Iniciar sesión
+                    </Link>
+                  </div>
+                )
+              ) : (
+                <div className="notify-confirmed">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                  </svg>
+                  <span>Te avisaremos por correo cuando este repuesto vuelva a estar disponible.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {addedNotice && (
+            <p className={`added-to-cart-notice ${addedNotice.startsWith("Solo") ? "limited" : ""}`}>{addedNotice}</p>
+          )}
 
           <div className="product-benefits">
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
               </svg>
-              <span>Garantía de 12 meses</span>
+              <span>{WARRANTY_AND_RETURNS_SUMMARY}</span>
             </div>
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
                 <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z" />
               </svg>
-              <span>Envío a todo Colombia</span>
+              <span>Envío gratis desde {formatPrice(FREE_SHIPPING_THRESHOLD)} (ejemplo)</span>
             </div>
             <div className="benefit">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
-              <span>Devolución en 30 días</span>
+              <span>Un asesor confirma tu pedido antes de cobrar</span>
             </div>
           </div>
         </div>
@@ -216,57 +390,33 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="compatibility-content">
-          {/* Estado actual */}
-          <div className={`compatibility-status ${isCompatible ? "compatible" : ""}`}>
-            <div className="status-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
-                <path d={isCompatible ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" : "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"} />
-              </svg>
+          {/* Con vehículo activo, el estado ya se explica en el banner de arriba (y su botón de asesor).
+              Sin vehículo no hay nada que evaluar: se invita a elegirlo. */}
+          {!isVehicleSaved && (
+            <div className="compat-prompt">
+              <div>
+                <h3>Verifica la compatibilidad con tu vehículo</h3>
+                <p>Elige tu vehículo para saber si este repuesto le sirve.</p>
+              </div>
+              <button type="button" className="btn-main" onClick={() => setIsModalOpen(true)}>
+                Elegir mi vehículo
+              </button>
             </div>
-            <div className="status-text">
-              <h3>
-                {isVehicleSaved
-                  ? isCompatible
-                    ? "Este repuesto es compatible con tu vehículo"
-                    : "Este repuesto no es compatible con tu vehículo"
-                  : "Verifica la compatibilidad con tu vehículo"}
-              </h3>
-              <p>
-                {isVehicleSaved ? (
-                  <>
-                    Hemos verificado que el <strong>{product.name} ({product.sku})</strong>{" "}
-                    {isCompatible ? "es compatible" : "no es compatible"} con tu{" "}
-                    <strong>{vehicle?.brand} {vehicle?.model} {vehicle?.year}</strong>.
-                  </>
-                ) : (
-                  "Guarda tu vehículo para verificar si este repuesto es compatible."
-                )}
-              </p>
-            </div>
-          </div>
+          )}
 
-          {/* Lista de vehículos compatibles */}
+          {/* HU-E06-03: aplicabilidad siempre visible (con o sin vehículo): en lenguaje claro y como tabla filtrable */}
           <div className="compatible-vehicles">
-            <h3>Vehículos compatibles con este repuesto</h3>
-            <div className="vehicles-grid">
-              {product.compatibleVehicles.map((v, index) => (
-                <div
-                  key={index}
-                  className={`vehicle-card ${
-                    vehicle?.brand === v.brand && vehicle?.model === v.model ? "highlighted" : ""
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                  <span className="vehicle-name">{v.brand} {v.model}</span>
-                  <span className="vehicle-years">{v.years}</span>
-                  {vehicle?.brand === v.brand && vehicle?.model === v.model && (
-                    <span className="your-vehicle-badge">Tu vehículo</span>
-                  )}
-                </div>
-              ))}
-            </div>
+            {product.compatibleVehicles.length === 0 ? (
+              <>
+                <h3>Vehículos compatibles con este repuesto</h3>
+                <p className="compatibility-data-note">
+                  Todavía no hay información de aplicabilidad cargada para este repuesto. Revisa la descripción o
+                  confírmalo con un asesor antes de comprarlo.
+                </p>
+              </>
+            ) : (
+              <VehicleApplicability vehicles={product.compatibleVehicles} appliesToVehicle={entryAppliesToVehicle} />
+            )}
           </div>
 
           {/* Verificar otro vehículo */}
@@ -299,12 +449,6 @@ export default function ProductDetailPage() {
           >
             Especificaciones
           </button>
-          <button
-            className={`tab-btn ${activeTab === "compatibilidad" ? "active" : ""}`}
-            onClick={() => setActiveTab("compatibilidad")}
-          >
-            Compatibilidad completa
-          </button>
         </div>
 
         {activeTab === "descripcion" && (
@@ -313,9 +457,8 @@ export default function ProductDetailPage() {
               <h3>{product.name} original KGM</h3>
               <p>{product.description}</p>
               <p>
-                Este repuesto es fabricado con los más altos estándares de calidad para garantizar
-                el óptimo funcionamiento de tu vehículo. Todos nuestros productos cuentan con garantía
-                oficial KGM.
+                Revisa la compatibilidad con tu vehículo antes de comprar. Las condiciones de garantía
+                y devolución están por definir con el equipo comercial.
               </p>
 
               <div className="recommendation-box">
@@ -338,7 +481,8 @@ export default function ProductDetailPage() {
                 {Object.entries(product.specifications).map(([key, value]) => (
                   <tr key={key}>
                     <th>{key.charAt(0).toUpperCase() + key.slice(1)}</th>
-                    <td>{value}</td>
+                    {/* A4: la garantía no se dice por producto; sale de la única fuente de política (E19, por definir) */}
+                    <td>{key === "garantia" ? WARRANTY_AND_RETURNS_VALUE : value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -346,73 +490,67 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {activeTab === "compatibilidad" && (
-          <div className="tab-panel active">
-            <div className="full-compatibility">
-              <h4>Lista completa de vehículos compatibles</h4>
-              <div className="compatibility-table-wrapper">
-                <table className="compatibility-table">
-                  <thead>
-                    <tr>
-                      <th>Marca</th>
-                      <th>Modelo</th>
-                      <th>Años</th>
-                      <th>Motor</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {product.compatibleVehicles.map((v, index) => (
-                      <tr
-                        key={index}
-                        className={
-                          vehicle?.brand === v.brand && vehicle?.model === v.model ? "highlight" : ""
-                        }
-                      >
-                        <td>{v.brand}</td>
-                        <td>{v.model}</td>
-                        <td>{v.years}</td>
-                        <td>{v.engine || "N/A"}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              vehicle?.brand === v.brand && vehicle?.model === v.model
-                                ? "compatible"
-                                : ""
-                            }`}
-                          >
-                            {vehicle?.brand === v.brand && vehicle?.model === v.model
-                              ? "Tu vehículo"
-                              : "Compatible"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
-      {/* Productos Relacionados */}
-      {relatedProducts.length > 0 && (
+      {/* HU-E07-04: si el producto no es compatible, priorizar alternativas que sí lo sean.
+          Sin alternativas, se ofrece asesor — vista simulada, el canal real aún no está definido (E21/E22/E54). */}
+      {compatibilityStatus === "not_compatible" && !showingAlternatives && (
         <section className="related-products">
           <div className="section-header">
-            <h2>Repuestos relacionados</h2>
-            <p>Otros productos que podrían interesarte</p>
+            <h2>No encontramos alternativas compatibles</h2>
+            <p>
+              No tenemos otro repuesto de esta categoría confirmado como compatible con tu{" "}
+              {vehicle?.brand} {vehicle?.model} en este momento.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => openAdvisor({ origin: "product_no_alternatives", product: { id: product.id, name: product.name, sku: product.sku } })}
+          >
+            Habla con un asesor sobre este repuesto
+          </button>
+        </section>
+      )}
+
+      {/* E55: complementos para instalar (corrección, no venta cruzada). Distinto de "otros repuestos" (E28). */}
+      {!product.discontinued && (
+        <ProductComplements key={`${product.id}-${vehicle ? `${vehicle.brand}${vehicle.model}${vehicle.year}${vehicle.engine ?? ""}` : "sin-vehiculo"}`} product={product} />
+      )}
+
+      {/* Productos Relacionados / Alternativas compatibles */}
+      {displayedRelatedProducts.length > 0 && (
+        <section className="related-products">
+          <div className="section-header">
+            <h2>{showingAlternatives ? "Alternativas compatibles con tu vehículo" : "Otros repuestos de esta categoría"}</h2>
+            <p>
+              {showingAlternatives
+                ? `Estas sí están confirmadas para tu ${vehicle?.brand} ${vehicle?.model}`
+                : "Para comparar opciones; no son complementos de instalación"}
+            </p>
           </div>
 
           <div className="products-grid">
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {displayedRelatedProducts.map((related) => (
+              <ProductCard key={related.id} product={related} />
             ))}
           </div>
         </section>
       )}
 
       <VehicleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {showIncompatibleConfirm && vehicle && (
+        <IncompatibleAddModal
+          productName={product.name}
+          vehicleLabel={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
+          onCancel={() => setShowIncompatibleConfirm(false)}
+          onConfirm={() => {
+            performAddToCart();
+            setShowIncompatibleConfirm(false);
+          }}
+        />
+      )}
     </>
   );
 }

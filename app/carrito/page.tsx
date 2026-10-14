@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCart } from "../context/CartContext";
+import { useCart, CartDiscrepancy } from "../context/CartContext";
 import { useUser } from "../context/UserContext";
+import { useVehicle } from "../context/VehicleContext";
 import { formatPrice } from "../data/products";
+import { getLineCompatibility } from "../lib/cartLine";
+import { useEstimatedDelivery } from "../lib/useEstimatedDelivery";
+import ShippingProgress from "../components/ShippingProgress";
+import NextSteps from "../components/NextSteps";
+import { Address } from "../types/account";
+import CartRevalidationModal from "../components/CartRevalidationModal";
+
+const COMPAT_LABEL: Record<string, string> = {
+  compatible: "Compatible con",
+  not_compatible: "No compatible con",
+  unknown: "Verificar compatibilidad con",
+};
 
 export default function CartPage() {
   const {
@@ -15,6 +28,8 @@ export default function CartPage() {
     getSubtotal,
     getShippingCost,
     clearCart,
+    getCartDiscrepancies,
+    applyDiscrepancies,
   } = useCart();
   const {
     currentUser,
@@ -22,9 +37,10 @@ export default function CartPage() {
     register,
     login,
     createOrderForCurrentUser,
-    getAvailableDiscountAmount,
   } = useUser();
+  const { vehicle, isVehicleSaved } = useVehicle();
   const router = useRouter();
+  const delivery = useEstimatedDelivery();
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -37,11 +53,40 @@ export default function CartPage() {
   const [authMode, setAuthMode] = useState<"register" | "login">("register");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  // HU-E11-02: direcciones guardadas seleccionables en el checkout
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  // HU-E11-05: revalidación de disponibilidad/precio justo antes de pagar
+  const [pendingDiscrepancies, setPendingDiscrepancies] = useState<CartDiscrepancy[] | null>(null);
+
+  // Preseleccionar la dirección predeterminada del cliente, si tiene una
+  useEffect(() => {
+    if (currentUser && currentUser.addresses.length > 0 && !selectedAddressId) {
+      const defaultAddress = currentUser.addresses.find((a) => a.isDefault) || currentUser.addresses[0];
+      applySavedAddress(defaultAddress);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
+
+  const applySavedAddress = (address: Address) => {
+    setSelectedAddressId(address.id);
+    setFormData((prev) => ({
+      ...prev,
+      direccion: address.address,
+      ciudad: address.city,
+      departamento: address.department,
+      telefono: address.phone,
+      notas: address.notes || "",
+    }));
+  };
+
+  const useNewAddress = () => {
+    setSelectedAddressId(null);
+    setFormData((prev) => ({ ...prev, direccion: "", ciudad: "", departamento: "", notas: "" }));
+  };
 
   const subtotal = getSubtotal();
   const shippingCost = getShippingCost();
-  const loyaltyDiscount = getAvailableDiscountAmount(subtotal);
-  const finalTotal = Math.max(0, subtotal + shippingCost - loyaltyDiscount);
+  const finalTotal = subtotal + shippingCost;
 
   const fullName = isAuthenticated && currentUser ? currentUser.name : formData.nombre;
   const email = isAuthenticated && currentUser ? currentUser.email : formData.email;
@@ -57,6 +102,14 @@ export default function CartPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
+
+    // HU-E11-05: nunca se confirma el pedido sin revisar antes disponibilidad y precio actuales
+    const discrepancies = getCartDiscrepancies();
+    if (discrepancies.length > 0) {
+      setPendingDiscrepancies(discrepancies);
+      return;
+    }
+
     let targetUserId = currentUser?.id;
     let targetUser = currentUser || undefined;
 
@@ -91,6 +144,7 @@ export default function CartPage() {
         price: item.product.price,
         quantity: item.quantity,
         image: item.product.image,
+        vehicle: item.vehicle,
       })),
       subtotal,
       shipping: shippingCost,
@@ -111,8 +165,8 @@ export default function CartPage() {
     }
 
     clearCart();
-    alert(`Pedido ${orderResult.orderId} registrado correctamente en tu cuenta.`);
-    router.push("/cuenta");
+    // HU-E15-01: página de confirmación real en vez de un alert() del navegador
+    router.push(`/pedido/${orderResult.orderId}`);
   };
 
   if (items.length === 0) {
@@ -139,9 +193,17 @@ export default function CartPage() {
           <p style={{ color: "var(--color-gray-600)", marginBottom: "32px" }}>
             Explora nuestro catálogo y encuentra los repuestos que necesitas para tu vehículo.
           </p>
-          <Link href="/repuestos" className="btn-main">
-            Ver repuestos
-          </Link>
+          <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/repuestos" className="btn-main">
+              Ver repuestos
+            </Link>
+            {/* HU-E10-05: si hay vehículo activo, ofrecer ir directo a lo compatible */}
+            {isVehicleSaved && vehicle && (
+              <Link href="/repuestos?compatible=true" className="btn-outline">
+                Ver compatibles con mi {vehicle.brand} {vehicle.model}
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -160,15 +222,29 @@ export default function CartPage() {
             {items.map((item) => (
               <div key={item.product.id} className="cart-item-large">
                 <div className="cart-item-image-large">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60" height="60">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z" />
-                  </svg>
+                  {item.product.image ? (
+                    <img src={item.product.image} alt={item.product.name} loading="lazy" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60" height="60">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z" />
+                    </svg>
+                  )}
                 </div>
                 <div className="cart-item-info">
                   <Link href={`/repuestos/${item.product.id}`}>
                     <h3>{item.product.name}</h3>
                   </Link>
                   <p className="cart-item-ref">Ref: {item.product.sku}</p>
+                  {/* HU-E10-03/E10-04: estado de compatibilidad visible y persistente en el carrito */}
+                  {/* HU-E10-03/E10-04: compatibilidad de la línea, nombrando el vehículo evaluado */}
+                  {(() => {
+                    const line = getLineCompatibility(item, isVehicleSaved ? vehicle : null);
+                    return line ? (
+                      <span className={`cart-item-compat ${line.status}`}>
+                        {COMPAT_LABEL[line.status]} {line.vehicle.brand} {line.vehicle.model} {line.vehicle.year}
+                      </span>
+                    ) : null;
+                  })()}
                   <p className="cart-item-price-unit">{formatPrice(item.product.price)} c/u</p>
                 </div>
 
@@ -176,13 +252,18 @@ export default function CartPage() {
                   <div className="quantity-selector">
                     <button
                       className="qty-btn"
+                      aria-label={`Disminuir cantidad de ${item.product.name}`}
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                       disabled={item.quantity <= 1}
                     >
                       -
                     </button>
-                    <input type="number" value={item.quantity} min="1" readOnly />
-                    <button className="qty-btn" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
+                    <input type="number" value={item.quantity} min="1" readOnly aria-label={`Cantidad de ${item.product.name}`} />
+                    <button
+                      className="qty-btn"
+                      aria-label={`Aumentar cantidad de ${item.product.name}`}
+                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    >
                       +
                     </button>
                   </div>
@@ -192,7 +273,7 @@ export default function CartPage() {
                   <span>{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
 
-                <button className="cart-item-remove-btn" onClick={() => removeFromCart(item.product.id)} title="Eliminar">
+                <button className="cart-item-remove-btn" onClick={() => removeFromCart(item.product.id)} title="Eliminar" aria-label={`Eliminar ${item.product.name} del carrito`}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
@@ -218,6 +299,9 @@ export default function CartPage() {
           <div className="cart-summary-card">
             <h3>Resumen del pedido</h3>
 
+            {/* HU-E18-02/03: condición del envío gratis y cuánto falta, visible antes del checkout */}
+            <ShippingProgress subtotal={subtotal} />
+
             <div className="summary-rows">
               <div className="summary-row">
                 <span>Subtotal</span>
@@ -225,27 +309,27 @@ export default function CartPage() {
               </div>
               <div className="summary-row">
                 <span>Envío</span>
-                <span>{shippingCost === 0 ? "Gratis" : formatPrice(shippingCost)}</span>
+                <span>{shippingCost === 0 ? "Gratis" : `${formatPrice(shippingCost)} (tarifa plana)`}</span>
               </div>
-              {shippingCost > 0 && (
-                <p className="shipping-promo">
-                  Envío gratis en compras mayores a {formatPrice(500000)}
-                </p>
-              )}
-              {loyaltyDiscount > 0 && (
-                <div className="summary-row discount">
-                  <span>Descuento fidelización</span>
-                  <span>-{formatPrice(loyaltyDiscount)}</span>
-                </div>
-              )}
+              {/* HU-E11-02: tiempo estimado, no solo costo. El costo por zona/cobertura sigue siendo decisión abierta (E18). */}
+              <p className="shipping-eta">
+                Entrega estimada: {delivery ? delivery.long : "3 a 5 días hábiles"} (valor de ejemplo)
+              </p>
               <div className="summary-row total">
                 <span>Total</span>
                 <span>{formatPrice(finalTotal)}</span>
               </div>
             </div>
+
+            {/* El formulario de envío está en la columna ancha; este botón lo envía (atributo form), con su validación */}
+            <button type="submit" form="checkout-form" className="btn-main">
+              Confirmar pedido
+            </button>
+            <p className="form-note">Aún no se cobra nada: te contactaremos para coordinar el pago.</p>
+            <NextSteps hasVehicle={isVehicleSaved && !!vehicle} />
           </div>
 
-          <form className="checkout-form" onSubmit={handleSubmit}>
+          <form id="checkout-form" className="checkout-form" onSubmit={handleSubmit}>
             <h3>Datos de envío</h3>
             {formError ? <p className="account-message error">{formError}</p> : null}
 
@@ -298,7 +382,7 @@ export default function CartPage() {
                   <p>
                     {isAuthenticated
                       ? "Este pedido quedará guardado en tu historial."
-                      : "Crea tu cuenta o inicia sesión para guardar pedidos y activar fidelización."}
+                      : "Crea tu cuenta o inicia sesión para guardar tus pedidos."}
                   </p>
                 </div>
               </div>
@@ -335,22 +419,43 @@ export default function CartPage() {
                     />
                   </div>
                 </>
-              ) : currentUser?.loyalty.benefitStatus === "available" ? (
-                <p className="loyalty-badge-message">
-                  Se aplicará automáticamente tu 10% de descuento:
-                  {" "}
-                  <strong>-{formatPrice(loyaltyDiscount)}</strong>
-                </p>
-              ) : (
-                <p className="loyalty-badge-message muted">
-                  Te faltan <strong>{formatPrice(currentUser?.loyalty.nextRewardRemaining || 0)}</strong> para
-                  obtener 10% en tu próxima compra.
-                </p>
-              )}
+              ) : null}
             </div>
 
+            {/* HU-E11-02: reutilizar una dirección ya guardada en vez de escribirla de nuevo */}
+            {isAuthenticated && currentUser && currentUser.addresses.length > 0 && (
+              <div className="form-group saved-addresses-picker">
+                <label>Dirección de envío *</label>
+                <div className="saved-address-options">
+                  {currentUser.addresses.map((address) => (
+                    <button
+                      type="button"
+                      key={address.id}
+                      className={`saved-address-option ${selectedAddressId === address.id ? "selected" : ""}`}
+                      onClick={() => applySavedAddress(address)}
+                    >
+                      <strong>{address.label || "Dirección"}</strong>
+                      <span>{address.address}, {address.city}</span>
+                      {address.isDefault && <span className="default-tag">Predeterminada</span>}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={`saved-address-option ghost ${selectedAddressId === null ? "selected" : ""}`}
+                    onClick={useNewAddress}
+                  >
+                    + Usar otra dirección
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="form-group">
-              <label htmlFor="direccion">Dirección de envío *</label>
+              <label htmlFor="direccion">
+                {isAuthenticated && currentUser && currentUser.addresses.length > 0
+                  ? "Confirma o ajusta la dirección *"
+                  : "Dirección de envío *"}
+              </label>
               <input
                 type="text"
                 id="direccion"
@@ -447,6 +552,17 @@ export default function CartPage() {
           </form>
         </div>
       </div>
+
+      {pendingDiscrepancies && (
+        <CartRevalidationModal
+          discrepancies={pendingDiscrepancies}
+          onCancel={() => setPendingDiscrepancies(null)}
+          onUpdateCart={() => {
+            applyDiscrepancies(pendingDiscrepancies);
+            setPendingDiscrepancies(null);
+          }}
+        />
+      )}
     </div>
   );
 }

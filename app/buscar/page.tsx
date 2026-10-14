@@ -3,33 +3,33 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { products, categories, formatPrice } from "../data/products";
+import { categories, searchProductsSmart, searchProductsFull, isProductCompatible, sortByCompatibility } from "../data/products";
 import ProductCard from "../components/ProductCard";
 import VehicleModal from "../components/VehicleModal";
+import ServiceUnavailable from "../components/ServiceUnavailable";
 import { useVehicle } from "../context/VehicleContext";
+import { useServiceStatus } from "../context/ServiceStatusContext";
+import { useAdvisor } from "../context/AdvisorContext";
+import { logUnmetSearch } from "../lib/unmetDemand";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  const { vehicle, isVehicleSaved } = useVehicle();
+  const { vehicle, isVehicleSaved, compatibleOnly, setCompatibleOnly } = useVehicle();
+  const { isInventoryDown } = useServiceStatus();
+  const { openAdvisor } = useAdvisor();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showOnlyCompatible, setShowOnlyCompatible] = useState(false);
+  // HU-E05-03/E07-01: el filtro de compatibilidad persiste entre pantallas; solo tiene efecto si hay vehículo activo
+  const showOnlyCompatible = compatibleOnly && isVehicleSaved;
+  const setShowOnlyCompatible = setCompatibleOnly;
   const [sortBy, setSortBy] = useState("relevancia");
+  const [forceOriginalTerm, setForceOriginalTerm] = useState(false);
 
-  // Realizar búsqueda
-  const searchResults = useMemo(() => {
-    if (!query.trim()) return [];
-
-    const lowerQuery = query.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(lowerQuery) ||
-        p.sku.toLowerCase().includes(lowerQuery) ||
-        p.description.toLowerCase().includes(lowerQuery) ||
-        p.category.toLowerCase().includes(lowerQuery) ||
-        p.subcategory.toLowerCase().includes(lowerQuery)
-    );
-  }, [query]);
+  // HU-E04-01/02/04: búsqueda general con tolerancia a errores tipográficos.
+  // "forceOriginalTerm" permite al usuario forzar el término literal que escribió (HU-E04-02).
+  const smartSearch = useMemo(() => searchProductsSmart(query), [query]);
+  const searchResults = forceOriginalTerm ? searchProductsFull(query) : smartSearch.results;
+  const correctedQuery = forceOriginalTerm ? null : smartSearch.correctedQuery;
 
   // Aplicar filtros adicionales
   const filteredResults = useMemo(() => {
@@ -37,13 +37,7 @@ export default function SearchPage() {
 
     // Filtrar por compatibilidad
     if (showOnlyCompatible && vehicle) {
-      result = result.filter((p) =>
-        p.compatibleVehicles.some(
-          (v) =>
-            v.brand.toLowerCase() === vehicle.brand.toLowerCase() &&
-            v.model.toLowerCase() === vehicle.model.toLowerCase()
-        )
-      );
+      result = result.filter((p) => isProductCompatible(p, vehicle));
     }
 
     // Ordenar
@@ -57,27 +51,47 @@ export default function SearchPage() {
       case "nombre":
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
+      default:
+        // Relevancia: con vehículo activo, los compatibles van primero (Modelo conceptual §1)
+        result = sortByCompatibility(result, isVehicleSaved ? vehicle : null);
     }
 
     return result;
-  }, [searchResults, showOnlyCompatible, vehicle, sortBy]);
+  }, [searchResults, showOnlyCompatible, vehicle, isVehicleSaved, sortBy]);
 
   // Contar productos compatibles
   const compatibleCount = useMemo(() => {
     if (!vehicle) return 0;
-    return searchResults.filter((p) =>
-      p.compatibleVehicles.some(
-        (v) =>
-          v.brand.toLowerCase() === vehicle.brand.toLowerCase() &&
-          v.model.toLowerCase() === vehicle.model.toLowerCase()
-      )
-    ).length;
+    return searchResults.filter((p) => isProductCompatible(p, vehicle)).length;
   }, [searchResults, vehicle]);
 
-  // Scroll to top cuando cambia la búsqueda
+  // HU-E04-05: perdí todos los resultados solo por el filtro de compatibilidad activo
+  const hiddenByVehicleFilter =
+    showOnlyCompatible && searchResults.length > 0 && filteredResults.length === 0;
+
+  // Scroll to top y limpiar estado de UI cuando cambia el término de búsqueda
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    setForceOriginalTerm(false);
   }, [query]);
+
+  // HU-E13-04: una búsqueda sin ningún resultado queda registrada sin pedir datos (analítica agregada de demanda)
+  const noResultsAtAll = !!query.trim() && searchResults.length === 0 && !isInventoryDown;
+  const vehicleLabel = vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : undefined;
+  useEffect(() => {
+    if (noResultsAtAll) logUnmetSearch(query, vehicleLabel);
+  }, [noResultsAtAll, query, vehicleLabel]);
+
+  // HU-E02-04: catálogo/búsqueda caídos (activado desde el interruptor de demo en el pie de página).
+  // La épica E40 no tiene historias redactadas en Notion; el criterio concreto vive en HU-E02-04.
+  if (isInventoryDown) {
+    return (
+      <ServiceUnavailable
+        title="No pudimos completar tu búsqueda"
+        description="Estamos teniendo problemas para conectarnos con el sistema de inventario. Intenta de nuevo en unos minutos."
+      />
+    );
+  }
 
   return (
     <>
@@ -93,16 +107,31 @@ export default function SearchPage() {
         <h1>Resultados de búsqueda</h1>
         {query && (
           <p className="results-count">
-            {filteredResults.length > 0 ? (
+            {filteredResults.length > 0 && !correctedQuery ? (
               <>
-                Se encontraron <strong>{filteredResults.length}</strong> productos para "<strong>{query}</strong>"
+                Se encontraron <strong>{filteredResults.length}</strong> productos para “<strong>{query}</strong>”
               </>
-            ) : (
+            ) : filteredResults.length === 0 && !correctedQuery && !hiddenByVehicleFilter ? (
               <>
-                No se encontraron productos para "<strong>{query}</strong>"
+                No se encontraron productos para “<strong>{query}</strong>”
               </>
-            )}
+            ) : null}
           </p>
+        )}
+
+        {/* HU-E04-02: término corregido por tolerancia a errores tipográficos (simulado) */}
+        {correctedQuery && (
+          <div className="corrected-query-banner">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z" />
+            </svg>
+            <span>
+              No encontramos “<strong>{query}</strong>”, mostrando resultados para “<strong>{correctedQuery}</strong>”.{" "}
+              <button type="button" className="link-button" onClick={() => setForceOriginalTerm(true)}>
+                Buscar “{query}” tal como lo escribí
+              </button>
+            </span>
+          </div>
         )}
       </div>
 
@@ -179,13 +208,6 @@ export default function SearchPage() {
             <>
               {/* Barra de ordenamiento */}
               <div className="sort-bar">
-                <div className="view-toggle">
-                  <button className="view-btn active" title="Vista grid">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                      <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm-6 0h4v-4h-4v4z" />
-                    </svg>
-                  </button>
-                </div>
                 <div className="sort-select">
                   <label>Ordenar por:</label>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -204,6 +226,21 @@ export default function SearchPage() {
                 ))}
               </div>
             </>
+          ) : hiddenByVehicleFilter ? (
+            // HU-E04-05: la búsqueda sí tiene resultados, pero el filtro de vehículo los oculta todos
+            <div className="search-no-results">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="80" height="80">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+              </svg>
+              <h3>Ninguno de estos resultados es compatible con tu vehículo</h3>
+              <p>
+                Encontramos <strong>{searchResults.length}</strong> productos para “<strong>{query}</strong>”,
+                pero ninguno está confirmado como compatible con tu <strong>{vehicle?.brand} {vehicle?.model}</strong>.
+              </p>
+              <button className="btn-main" onClick={() => setShowOnlyCompatible(false)}>
+                Ver los {searchResults.length} resultados de todas formas
+              </button>
+            </div>
           ) : (
             <div className="search-no-results">
               <svg
@@ -216,7 +253,10 @@ export default function SearchPage() {
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
               </svg>
               <h3>No se encontraron resultados</h3>
-              <p>Intenta con otros términos de búsqueda o explora por categorías:</p>
+              <p>
+                Prueba con un término más general (por ejemplo, “amortiguador”) o con la pieza y el modelo (por
+                ejemplo, “Disco de freno Tivoli”). También puedes explorar por categorías:
+              </p>
               <div className="suggested-categories">
                 {categories.slice(0, 4).map((cat) => (
                   <Link key={cat.id} href={`/repuestos?categoria=${cat.id}`} className="suggested-category">
@@ -227,6 +267,26 @@ export default function SearchPage() {
               <Link href="/repuestos" className="btn-main">
                 Ver todos los repuestos
               </Link>
+
+              {/* HU-E04-05 / E54: contactar a un asesor como último recurso, con búsqueda y vehículo como contexto.
+                  El canal real sigue por definir: el flujo es una simulación. */}
+              <div className="advisor-fallback demand-capture">
+                <h4>¿No lo encuentras? ¡Lo conseguimos por ti!</h4>
+                <p>
+                  Cuéntanos qué repuesto buscas y para qué vehículo: un asesor te responde con una opción o una
+                  cotización.
+                </p>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => openAdvisor({ origin: "empty_search", searchQuery: query })}
+                >
+                  Pedir que lo consigan
+                </button>
+                <p className="demand-note">
+                  Guardamos lo que buscaste, sin tus datos personales, para saber qué repuestos faltan en el catálogo.
+                </p>
+              </div>
             </div>
           )}
         </div>
